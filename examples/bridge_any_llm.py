@@ -50,6 +50,7 @@ def _load_dotenv(path: Path) -> None:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
+            k = k.lstrip("\ufeff")
             os.environ.setdefault(k.strip(), v.strip())
     except FileNotFoundError:
         pass
@@ -62,6 +63,11 @@ CHAT_ID   = os.environ.get("RELAY_CHAT_ID", "me")               # 单用户通�
 HISTORY_N = int(os.environ.get("HISTORY_N", "12"))             # 喂给模型的最近对话「轮」数
 TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.7"))
 HTTP_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "120"))
+OPENROUTER_REFERER = os.environ.get("OPENROUTER_HTTP_REFERER", "http://127.0.0.1:4174")
+OPENROUTER_TITLE = os.environ.get("OPENROUTER_TITLE", "Tidal Echo Local")
+MODEL_CONFIG_FILE = os.environ.get("MODEL_CONFIG_FILE", "").strip()
+RELATIONSHIP_FILE = os.environ.get("RELATIONSHIP_FILE", "").strip()
+MEMORY_BANK_FILE = os.environ.get("MEMORY_BANK_FILE", "").strip()
 
 # persona = 模型的人设(system prompt)。从 PERSONA 文本或 PERSONA_FILE 文件读。
 PERSONA = os.environ.get("PERSONA", "").strip()
@@ -73,6 +79,42 @@ if not PERSONA and _persona_file:
         pass
 if not PERSONA:
     PERSONA = "你是对方的 AI 伴侣,在一个私密的一对一聊天里。说话自然、简短、有温度,像在用手机聊天,不要长篇大论。"
+
+
+def _read_optional_text(path_text: str) -> str:
+    if not path_text:
+        return ""
+    try:
+        return Path(path_text).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+RELATIONSHIP_SUMMARY = _read_optional_text(RELATIONSHIP_FILE)
+
+
+def memory_context() -> str:
+    if not MEMORY_BANK_FILE:
+        return ""
+    try:
+        backend_dir = Path(__file__).resolve().parents[1] / "backend"
+        if str(backend_dir) not in sys.path:
+            sys.path.insert(0, str(backend_dir))
+        from memory_service import build_memory_context
+        return build_memory_context(MEMORY_BANK_FILE)
+    except Exception as e:
+        log("memory", f"load failed: {e}")
+        return "[System error] Memory load failed"
+
+
+def system_prompt() -> str:
+    parts = [PERSONA]
+    if RELATIONSHIP_SUMMARY:
+        parts.append(RELATIONSHIP_SUMMARY)
+    mem = memory_context()
+    if mem:
+        parts.append(mem)
+    return "\n\n".join(part for part in parts if part.strip())
 
 # 模型链:主模型 + 可选兜底(LLM_*_2 / _3)。任一返回 FALLBACK_CODES 就顺次切下一个。
 def _model_routes() -> list:
@@ -145,6 +187,20 @@ def send_reply(text: str) -> None:
     log("out", f"replied (id={out.get('id')})")
 
 
+def send_generation_error(err: Exception) -> None:
+    detail = "模型接口刚刚没有正常返回"
+    if isinstance(err, urllib.error.HTTPError):
+        if err.code == 402:
+            detail = "当前模型可能额度不足或需要付费权限"
+        else:
+            detail = f"模型接口返回了 HTTP {err.code}"
+    text = f"[System error] {detail}"
+    try:
+        send_reply(text)
+    except Exception as send_err:
+        log("err", f"发送错误提示失败: {send_err}")
+
+
 # ---------------------------------------------------------------------------
 # 历史 → 内存上下文
 # ---------------------------------------------------------------------------
@@ -179,7 +235,7 @@ def load_history() -> tuple:
 
 
 def build_messages() -> list:
-    return [{"role": "system", "content": PERSONA}] + list(convo)
+    return [{"role": "system", "content": system_prompt()}] + list(convo)
 
 
 # ---------------------------------------------------------------------------
@@ -193,20 +249,29 @@ def _one_call(route: dict, messages: list) -> str:
         "temperature": TEMPERATURE,
         # 想接 function calling:在这里加 "tools": [...],处理返回里的 tool_calls,循环喂回(上限 ~8 步)。
     }, ensure_ascii=False).encode("utf-8")
+    headers = {"Authorization": f"Bearer {route['key']}", "Content-Type": "application/json"}
+    if "openrouter.ai" in route["base"]:
+        headers["HTTP-Referer"] = OPENROUTER_REFERER
+        headers["X-Title"] = OPENROUTER_TITLE
+
     req = urllib.request.Request(
         route["base"] + "/chat/completions", data=body, method="POST",
-        headers={"Authorization": f"Bearer {route['key']}", "Content-Type": "application/json"},
+        headers=headers,
     )
     with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as r:
         data = json.loads(r.read().decode("utf-8"))
     return (data["choices"][0]["message"]["content"] or "").strip()
 
 
-def call_llm(messages: list) -> str:
+def call_llm(messages: list) -> tuple:
+    """Returns (reply_text, actual_model_id). actual_model_id may differ from
+    the configured model when fallback kicks in (e.g. region block)."""
     last_err = None
-    for route in MODEL_ROUTES:
+    for route in active_model_routes():
+        log("model", route.get("model", ""))
         try:
-            return _one_call(route, messages)
+            text = _one_call(route, messages)
+            return text, route["model"]
         except urllib.error.HTTPError as e:
             last_err = e
             if e.code in FALLBACK_CODES:
@@ -220,6 +285,21 @@ def call_llm(messages: list) -> str:
     raise RuntimeError(f"所有模型都失败,最后错误: {last_err}")
 
 
+def active_model_routes() -> list:
+    routes = [dict(r) for r in MODEL_ROUTES]
+    if routes and MODEL_CONFIG_FILE:
+        try:
+            data = json.loads(Path(MODEL_CONFIG_FILE).read_text(encoding="utf-8"))
+            model = str(data.get("model") or "").strip()
+            if model:
+                routes[0]["model"] = model
+        except OSError:
+            pass
+        except Exception as e:
+            log("model", f"读取模型配置失败: {e}")
+    return routes
+
+
 # ---------------------------------------------------------------------------
 # 一条消息的处理
 # ---------------------------------------------------------------------------
@@ -228,9 +308,6 @@ def handle_human_message(msg: dict) -> None:
     content = (msg.get("content") or "").strip()
     atts = msg.get("attachments") or []
     if atts:
-        # 图片/附件:如需让多模态模型看图,在这里 GET {RELAY}/uploads/{name}?token={SECRET}
-        # 下载,再按你模型的格式(base64 / image_url)塞进最后一条 user message。
-        # 这个参考实现先降级成一行文字提示,保持简单。
         names = ", ".join(a.get("name") or "file" for a in atts)
         content = (content + "\n" if content else "") + f"(对方发来 {len(atts)} 个附件: {names})"
     if not content:
@@ -238,11 +315,18 @@ def handle_human_message(msg: dict) -> None:
     log("in", f"#{msg.get('id')}: {content[:60]}")
     convo.append({"role": "user", "content": content})
     try:
-        reply = call_llm(build_messages())
+        reply, actual_model = call_llm(build_messages())
     except Exception as e:
         log("err", f"生成失败: {e}")
+        send_generation_error(e)
         return
     if reply:
+        # If fallback was used, append a subtle note so the user knows
+        configured = active_model_routes()[0]["model"] if active_model_routes() else ""
+        if actual_model and actual_model != configured:
+            short_actual = actual_model.split("/")[-1] if "/" in actual_model else actual_model
+            short_configured = configured.split("/")[-1] if "/" in configured else configured
+            reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
         convo.append({"role": "assistant", "content": reply})
         send_reply(reply)
 

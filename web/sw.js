@@ -2,7 +2,7 @@
    IMPORTANT: bump CACHE on every front-end change, or installed clients keep the
    old shell (the precached index.html won't refresh until the SW reinstalls). */
 const AI_NAME = "Claude";          // push-title fallback; keep in sync with index.html CONFIG.AI_NAME
-const CACHE = "companion-v2-api-loop";
+const CACHE = "companion-v3-zeabur";
 const PRECACHE = [
   "./index.html",
   "./chat-light.webp", "./chat-harbor.webp",
@@ -27,7 +27,13 @@ self.addEventListener("activate", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (url.pathname.startsWith("/relay/")) return;          // never intercept the API / SSE
+  // Skip API paths and SSE streams — never cache or intercept these
+  if (url.pathname.startsWith("/relay/")
+      || url.pathname.startsWith("/app/")
+      || url.pathname.startsWith("/channel/")
+      || url.pathname.startsWith("/uploads/")
+      || url.pathname === "/healthz"
+      || (e.request.headers.get("accept") || "").includes("text/event-stream")) return;
   if (e.request.mode === "navigate") {
     // network-first for the page → an online reload always gets the latest index.html
     e.respondWith(fetch(e.request, { cache: "reload" }).catch(() => caches.match("./index.html")));

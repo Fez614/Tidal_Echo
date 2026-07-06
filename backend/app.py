@@ -34,8 +34,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
+
+try:
+    from memory_service import MemoryService
+except ImportError:
+    from .memory_service import MemoryService
 
 try:
     from pywebpush import webpush, WebPushException
@@ -51,6 +57,7 @@ HUMAN_NAME = os.environ.get("RELAY_HUMAN_NAME", "对方")   # how the AI is told
 
 # --- core config / secrets (all from env) ----------------------------------
 SECRET = os.environ.get("RELAY_SECRET", "")
+APP_AUTH_OPTIONAL = os.environ.get("RELAY_APP_AUTH_OPTIONAL", "0").strip().lower() in ("1", "true", "yes", "on")
 DB_PATH = os.environ.get("RELAY_DB", str(Path(__file__).parent / "relay.db"))
 PORT = int(os.environ.get("RELAY_PORT", "3011"))
 UPLOAD_DIR = Path(os.environ.get("RELAY_UPLOAD_DIR", str(Path(__file__).parent / "uploads")))
@@ -87,6 +94,14 @@ PRESENCE_RECENT_SEC = int(os.environ.get("RELAY_PRESENCE_RECENT_SEC", "1800"))
 BRAIN_FILE = Path(os.environ.get("RELAY_BRAIN_FILE", str(Path(__file__).parent / "brain_target")))
 LOOP_INGEST_URL = os.environ.get("RELAY_LOOP_INGEST_URL", "http://127.0.0.1:3020/loop/ingest")
 STREAM_DRAFT_TTL = int(os.environ.get("RELAY_STREAM_DRAFT_TTL", "600"))
+MODEL_FILE = Path(os.environ.get("RELAY_MODEL_FILE", str(Path(__file__).parent / "model_config.json")))
+MODEL_OPTIONS = [
+    {"label": "Nemotron Free", "model": "nvidia/nemotron-3-ultra-550b-a55b:free"},
+    {"label": "Cohere Free", "model": "cohere/north-mini-code:free"},
+    {"label": "Opus 4.6", "model": "anthropic/claude-opus-4.6"},
+    {"label": "Claude Sonnet", "model": "anthropic/claude-sonnet-5"},
+    {"label": "Claude Fable", "model": "~anthropic/claude-fable-latest"},
+]
 
 if not SECRET:
     raise SystemExit("RELAY_SECRET is required (set it in the systemd EnvironmentFile)")
@@ -359,6 +374,20 @@ def brain_target() -> str:
         return "desktop"
 
 
+def selected_model() -> str:
+    fallback = MODEL_OPTIONS[0]["model"]
+    try:
+        data = json.loads(MODEL_FILE.read_text(encoding="utf-8"))
+        model = str(data.get("model") or "").strip()
+        return model or fallback
+    except Exception:
+        return fallback
+
+
+def memory_service() -> MemoryService:
+    return MemoryService()
+
+
 def _forward_to_loop_sync(msg: dict) -> None:
     meta = msg.get("meta") or {}
     data = json.dumps({
@@ -616,6 +645,8 @@ SSE_HEADERS = {
 # ---------------------------------------------------------------------------
 
 def check_auth(request: Request) -> None:
+    if APP_AUTH_OPTIONAL and (request.url.path.startswith("/app/") or request.url.path.startswith("/uploads/")):
+        return
     auth = request.headers.get("authorization", "")
     token = auth[7:] if auth.startswith("Bearer ") else request.query_params.get("token")
     if not token or not hmac.compare_digest(token, SECRET):
@@ -639,6 +670,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Static frontend (PWA) — mount web/ at /chat/ if directory exists ------
+_WEB_DIR = Path(__file__).parent.parent / "web"
+if _WEB_DIR.is_dir():
+    app.mount("/chat", StaticFiles(directory=str(_WEB_DIR), html=True), name="chat-static")
+
+@app.get("/")
+async def root_redirect():
+    return RedirectResponse(url="/chat/", status_code=302)
 
 
 @app.get("/healthz")
@@ -977,6 +1017,122 @@ async def set_brain(request: Request):
     return {"target": target}
 
 
+@app.get("/app/model")
+async def get_model(request: Request):
+    check_auth(request)
+    return {"model": selected_model(), "options": MODEL_OPTIONS}
+
+
+@app.post("/app/model")
+async def set_model(request: Request):
+    check_auth(request)
+    body = await request.json()
+    model = str(body.get("model") or "").strip()
+    if not model or len(model) > 160 or not re.match(r"^[A-Za-z0-9._~:/+-]+$", model):
+        raise HTTPException(status_code=400, detail="invalid model")
+    MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
+    MODEL_FILE.write_text(json.dumps({"model": model}, ensure_ascii=False), encoding="utf-8")
+    return {"model": model, "options": MODEL_OPTIONS}
+
+
+# --- model availability check (server-side, same network as bridge) --------
+_OR_KEY = os.environ.get("RELAY_OPENROUTER_KEY", "")
+_model_check_cache: dict = {}
+
+@app.get("/app/model/check")
+async def check_model_availability(request: Request, model: str = ""):
+    check_auth(request)
+    if not model:
+        raise HTTPException(status_code=400, detail="model parameter required")
+    if not _OR_KEY:
+        return {"model": model, "status": "unknown", "reason": "no API key configured"}
+    # cache for 60 seconds
+    import time as _time
+    cached = _model_check_cache.get(model)
+    if cached and _time.time() - cached["ts"] < 60:
+        return {"model": model, "status": cached["status"]}
+    # lightweight ping to OpenRouter
+    try:
+        body = json.dumps({
+            "model": model,
+            "messages": [{"role": "user", "content": "hi"}],
+            "max_tokens": 4,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=body,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {_OR_KEY}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "http://127.0.0.1:3011",
+                "X-Title": "Tidal Echo Relay",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            status = "available" if r.status == 200 else "unavailable"
+    except urllib.error.HTTPError as e:
+        status = "available" if e.code not in (401, 403, 404, 429, 500, 502, 503) else "unavailable"
+    except Exception:
+        status = "unavailable"
+    _model_check_cache[model] = {"status": status, "ts": _time.time()}
+    return {"model": model, "status": status}
+
+
+@app.get("/app/memories")
+async def get_memories(request: Request, include_archived: bool = True, q: str = ""):
+    check_auth(request)
+    service = memory_service()
+    if q:
+        items = service.search(q, {"includeArchived": include_archived, "limit": 100})
+    else:
+        items = service.list(include_archived=include_archived)
+    active_count = len([m for m in items if m.get("status") == "active"])
+    return {"memories": items, "count": len(items), "active_count": active_count}
+
+
+@app.post("/app/memories")
+async def add_memory(request: Request):
+    check_auth(request)
+    body = await request.json()
+    content = str(body.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content required")
+    item = memory_service().save(body)
+    return {"memory": item}
+
+
+@app.post("/app/memories/import")
+async def import_memories(request: Request):
+    check_auth(request)
+    body = await request.json()
+    text = str(body.get("text") or "").strip()
+    name = str(body.get("name") or "import").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="text required")
+    imported = memory_service().import_markdown(text, source=name[:80])
+    return {"imported": imported, "count": len(imported)}
+
+
+@app.patch("/app/memories/{memory_id}")
+async def patch_memory(memory_id: str, request: Request):
+    check_auth(request)
+    body = await request.json()
+    item = memory_service().update(memory_id, body)
+    if not item:
+        raise HTTPException(status_code=404, detail="memory not found")
+    return {"memory": item}
+
+
+@app.post("/app/memories/{memory_id}/archive")
+async def archive_memory(memory_id: str, request: Request):
+    check_auth(request)
+    item = memory_service().archive(memory_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="memory not found")
+    return {"memory": item}
+
+
 @app.get("/app/loop_config")
 async def get_loop_config(request: Request):
     check_auth(request)
@@ -1018,4 +1174,6 @@ async def app_sessions_patch(session_id: str, request: Request):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=PORT)
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", os.environ.get("RELAY_PORT", "3011")))
+    uvicorn.run(app, host=host, port=port)

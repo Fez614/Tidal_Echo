@@ -1,0 +1,16 @@
+.git
+.venv
+venv
+node_modules
+__pycache__
+*.pyc
+.env
+**/.env
+relay.db
+backend/relay.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+.DS_Store
+Thumbs.db
+*.md
+!backend/DEPLOY.md
