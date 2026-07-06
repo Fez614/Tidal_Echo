@@ -148,6 +148,17 @@ def init_db() -> None:
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sessions (
+                id        TEXT PRIMARY KEY,
+                title     TEXT NOT NULL DEFAULT '',
+                since_id  INTEGER NOT NULL DEFAULT 0,
+                active    INTEGER NOT NULL DEFAULT 0,
+                created   TEXT NOT NULL
+            )
+            """
+        )
         conn.commit()
 
 
@@ -1148,27 +1159,69 @@ async def set_loop_config(request: Request):
 @app.get("/app/sessions")
 async def app_sessions(request: Request):
     check_auth(request)
-    return loop_json("/loop/sessions")
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM sessions ORDER BY created ASC").fetchall()
+    sessions = [dict(r) for r in rows]
+    active = next((s["id"] for s in sessions if s.get("active")), "__legacy__")
+    return {"sessions": sessions, "active_session": active}
 
 
 @app.post("/app/sessions")
 async def app_sessions_create(request: Request):
     check_auth(request)
     body = await request.json()
-    if "since_id" not in body:
+    title = str(body.get("title") or "新对话").strip() or "新对话"
+    # since_id = current max message id (new session starts from now)
+    since_id = int(body.get("since_id") or 0)
+    if not since_id:
         try:
             with db() as conn:
                 row = conn.execute("SELECT MAX(id) AS id FROM messages").fetchone()
-                body["since_id"] = int(row["id"] or 0)
+                since_id = int(row["id"] or 0)
         except Exception:
-            body["since_id"] = 0
-    return loop_json("/loop/sessions", method="POST", body=body)
+            since_id = 0
+    session_id = f"sess-{secrets.token_hex(6)}"
+    ts = now_iso()
+    with db() as conn:
+        conn.execute("UPDATE sessions SET active = 0")
+        conn.execute(
+            "INSERT INTO sessions (id, title, since_id, active, created) VALUES (?,?,?,?,?)",
+            (session_id, title, since_id, 1, ts),
+        )
+        conn.commit()
+    created = {"id": session_id, "title": title, "since_id": since_id, "active": 1, "created": ts}
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM sessions ORDER BY created ASC").fetchall()
+    sessions = [dict(r) for r in rows]
+    return {"sessions": sessions, "active_session": session_id, "created": created}
 
 
 @app.patch("/app/sessions/{session_id}")
 async def app_sessions_patch(session_id: str, request: Request):
     check_auth(request)
-    return loop_json(f"/loop/sessions/{urllib.parse.quote(session_id)}", method="PATCH", body=await request.json())
+    body = await request.json()
+    updates = {}
+    if "title" in body:
+        updates["title"] = str(body["title"]).strip()
+    if "active" in body:
+        updates["active"] = 1 if body["active"] else 0
+    if not updates:
+        raise HTTPException(400, "no fields to update")
+    with db() as conn:
+        if updates.get("active"):
+            conn.execute("UPDATE sessions SET active = 0")
+        sets = ", ".join(f"{k} = ?" for k in updates)
+        vals = list(updates.values()) + [session_id]
+        conn.execute(f"UPDATE sessions SET {sets} WHERE id = ?", vals)
+        conn.commit()
+        row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "session not found")
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM sessions ORDER BY created ASC").fetchall()
+    sessions = [dict(r) for r in rows]
+    active = next((s["id"] for s in sessions if s.get("active")), "__legacy__")
+    return {"sessions": sessions, "active_session": active}
 
 
 if __name__ == "__main__":
