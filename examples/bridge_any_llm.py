@@ -285,18 +285,51 @@ def call_llm(messages: list) -> tuple:
     raise RuntimeError(f"所有模型都失败,最后错误: {last_err}")
 
 
-def active_model_routes() -> list:
-    routes = [dict(r) for r in MODEL_ROUTES]
-    if routes and MODEL_CONFIG_FILE:
-        try:
-            data = json.loads(Path(MODEL_CONFIG_FILE).read_text(encoding="utf-8"))
+_relay_model_cache = {"model": "", "ts": 0}
+
+def get_relay_model() -> str:
+    """Fetch current model from relay /app/model (cached 30s). Returns model id or ''."""
+    if not RELAY_URL or not SECRET:
+        return ""
+    now = time.time()
+    if _relay_model_cache["model"] and now - _relay_model_cache["ts"] < 30:
+        return _relay_model_cache["model"]
+    try:
+        req = urllib.request.Request(
+            f"{RELAY_URL}/app/model",
+            headers={"Authorization": f"Bearer {SECRET}"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as r:
+            data = json.loads(r.read().decode())
             model = str(data.get("model") or "").strip()
             if model:
-                routes[0]["model"] = model
-        except OSError:
-            pass
-        except Exception as e:
-            log("model", f"读取模型配置失败: {e}")
+                _relay_model_cache["model"] = model
+                _relay_model_cache["ts"] = now
+                return model
+    except Exception:
+        pass
+    return _relay_model_cache.get("model", "")  # return stale cache on failure
+
+
+def active_model_routes() -> list:
+    routes = [dict(r) for r in MODEL_ROUTES]
+    if routes:
+        model = ""
+        # Priority 1: relay /app/model (frontend switches update this)
+        relay_model = get_relay_model()
+        if relay_model:
+            model = relay_model
+        # Priority 2: local MODEL_CONFIG_FILE
+        if not model and MODEL_CONFIG_FILE:
+            try:
+                data = json.loads(Path(MODEL_CONFIG_FILE).read_text(encoding="utf-8"))
+                model = str(data.get("model") or "").strip()
+            except OSError:
+                pass
+            except Exception as e:
+                log("model", f"读取本地模型配置失败: {e}")
+        if model:
+            routes[0]["model"] = model
     return routes
 
 

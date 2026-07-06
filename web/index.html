@@ -3118,6 +3118,9 @@
 <div class="app" id="app" data-conn="offline">
   <header class="topbar">
     <button class="backbtn" id="backBtn" aria-label="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+    <div class="header-actions">
+      <button class="topbtn new-chat" id="newChatBtn" type="button" aria-label="&#26032;&#23545;&#35805;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
   </header>
   <div class="session-pop" id="sessionPop" aria-hidden="true" hidden><div class="session-title">Windows</div><button type="button" id="sessionNewBtn">New window</button><div class="session-list" id="sessionList"></div></div>
   <main class="scroll" id="scroll"><div class="empty" id="empty"><div class="orb"></div><p>&#36825;&#37324;&#21482;&#26377;&#20320;&#21644;Claude&#12290;<br>&#35828;&#28857;&#20160;&#20040;&#21543;&#12290;</p></div></main>
@@ -3430,6 +3433,7 @@ document.addEventListener("keydown", (e) => {
 
 /* 鈹€鈹€ Main menu (hub 路 entered from the chat back-arrow). Chat returns to chat. 鈹€鈹€ */
 const backBtn = $("#backBtn");
+const newChatBtn = $("#newChatBtn");
 const menuPanel = $("#menuPanel"), menuDaysEl = $("#menuDays");
 const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate"), menuModelLabel = $("#menuModelLabel");
 const memoryPanel = $("#memoryPanel"), memoryClose = $("#memoryClose"), memoryList = $("#memoryList"), memoryCount = $("#memoryCount");
@@ -3575,6 +3579,7 @@ function closeMenu(){
 }
 refreshDays();
 if (backBtn) backBtn.addEventListener("click", openMenu);
+if (newChatBtn) newChatBtn.addEventListener("click", () => { createNewSession(); });
 if (menuCloseBtn) menuCloseBtn.addEventListener("click", closeMenu);
 if (menuPanel){
   menuPanel.addEventListener("click", (e) => {
@@ -5356,6 +5361,7 @@ function renderText(t){
   let s = escapeHtml(t);
   s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/(?<!\w)_([^_\n][^_\n]*?)_(?!\w)/g, "<em>$1</em>");
   s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   s = s.replace(/\n/g, "<br>");
   return s;
