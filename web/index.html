@@ -602,7 +602,7 @@
   .row.ai .meta{ color: var(--text-faint); }
   .row.human .meta .tick,
   .row.ai .meta .tick{ color: var(--tick); }
-  /* 鍙戦€佷腑:灏忔椂閽?杞畬鍗抽€佽揪 鈫?鍚屼綅鎹㈡垚 鉁撯湏 */
+  /* 鍙戦€佷腑:灏忔椂閽?杞畬鍗抽€佽揪 鈫?鍚屼綅鎹㈡垚 ✓✓ */
   .meta .tick.clock{ color: var(--tick); }
   .meta .tick.clock svg{ width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
 
@@ -2675,6 +2675,20 @@
     border-color:#111;
     background:radial-gradient(circle at center, #111 0 38%, transparent 41%);
   }
+  /* model status indicator */
+  .model-status{
+    flex:none;display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:600;margin-top:4px;
+    padding:2px 8px;border-radius:999px;
+  }
+  .model-status.checking{background:#F5F3EE;color:#9A958B;}
+  .model-status.available{background:#E8EFE2;color:#4D9A58;}
+  .model-status.unavailable{background:#F6E2E2;color:#C25555;}
+  .model-status-dot{width:6px;height:6px;border-radius:50%;flex:none;}
+  .model-status.checking .model-status-dot{background:#B8B3A8;animation:pulse 1.2s ease infinite;}
+  .model-status.available .model-status-dot{background:#4D9A58;}
+  .model-status.unavailable .model-status-dot{background:#C25555;}
+  @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:30px; padding-right:30px; border-radius:40px 40px 0 0; }
     .attach-grid{ gap:18px; margin-left:-4px; margin-right:-4px; }
@@ -3126,7 +3140,7 @@
     <span class="call-mini-timer" id="callMiniTimer">00:00</span>
   </div>
   <div class="call-scrim" id="callScrim"></div>
-  <div class="call-sheet" role="dialog" aria-modal="true" aria-label="璇煶閫氳瘽">
+  <div class="call-sheet" role="dialog" aria-modal="true" aria-label="语音通话">
     <button class="call-minimize-top" id="callMinimize" type="button" aria-label="鏀惰捣">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
@@ -3158,18 +3172,18 @@
     <div class="call-controls">
       <button class="call-ctrl-btn" id="callMuteBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.75" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="17.5" x2="12" y2="21"/><line x1="8.5" y1="21" x2="15.5" y2="21"/><line x1="3.8" y1="3" x2="20.2" y2="20.4" class="mute-slash"/></svg>
-        <span>闈欓煶</span>
+        <span>静音</span>
       </button>
       <button class="call-ctrl-btn" id="callPrivateBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.25" width="15" height="10.25" rx="3.2"/><path d="M8 10.25V7.5a4 4 0 0 1 8 0v2.75"/><circle cx="12" cy="14.7" r="1.45" fill="currentColor" stroke="none"/><line x1="12" y1="15.7" x2="12" y2="17.4"/></svg>
-        <span>绉佸瘑妯″紡</span>
+        <span>私密模式</span>
       </button>
       <button class="call-ctrl-btn" id="callSpeakerBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.2h3.3L12 5v14l-4.7-4.2H4z" fill="currentColor" stroke-width="1.2"/><path d="M15.6 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.6a7.5 7.5 0 0 1 0 10.8"/></svg>
-        <span>鎵０鍣?/span>
+        <span>扬声器</span>
       </button>
     </div>
-    <button class="call-hangup" id="callHangup" type="button" aria-label="鎸傛柇">
+    <button class="call-hangup" id="callHangup" type="button" aria-label="挂断">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.996.996 0 0 0-1.01.24l-1.57 1.97a15.045 15.045 0 0 1-6.59-6.59l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
     </button>
   </div>
@@ -3178,27 +3192,27 @@
 <!-- 鈹€鈹€ Incoming call (requires user gesture before opening audio) 鈹€鈹€ -->
 <div class="call-overlay incoming-call-overlay hidden" id="incomingCallOverlay" aria-hidden="true">
   <div class="call-scrim" id="incomingCallScrim"></div>
-  <div class="call-sheet" role="dialog" aria-modal="true" aria-label="鏉ョ數">
+  <div class="call-sheet" role="dialog" aria-modal="true" aria-label="来电">
     <div class="call-caption" aria-hidden="true">
       <span class="call-star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c.8 5 3.5 7.7 8.5 8.5-5 .8-7.7 3.5-8.5 8.5-.8-5-3.5-7.7-8.5-8.5 5-.8 7.7-3.5 8.5-8.5Z"/></svg></span>
       <span>incoming call</span>
       <span class="call-star"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c.8 5 3.5 7.7 8.5 8.5-5 .8-7.7 3.5-8.5 8.5-.8-5-3.5-7.7-8.5-8.5 5-.8 7.7-3.5 8.5-8.5Z"/></svg></span>
     </div>
     <div class="incoming-call-avatar" role="img" aria-label="Claude"></div>
-    <div class="incoming-call-title">Claude鏉ョ數</div>
-    <div class="incoming-call-text" id="incomingCallText">Claude鎯冲拰浣犺闊抽€氳瘽銆?/div>
+    <div class="incoming-call-title">Claude来电</div>
+    <div class="incoming-call-text" id="incomingCallText">Claude想和你语音通话。</div>
     <div class="incoming-call-actions">
       <div class="incoming-call-slot">
-        <button class="incoming-call-btn decline" id="incomingCallDecline" type="button" aria-label="鎷掔粷">
+        <button class="incoming-call-btn decline" id="incomingCallDecline" type="button" aria-label="拒绝">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.996.996 0 0 0-1.01.24l-1.57 1.97a15.045 15.045 0 0 1-6.59-6.59l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
         </button>
-        <span class="incoming-call-label">鎷掔粷</span>
+        <span class="incoming-call-label">拒绝</span>
       </div>
       <div class="incoming-call-slot">
-        <button class="incoming-call-btn accept" id="incomingCallAccept" type="button" aria-label="鎺ュ惉">
+        <button class="incoming-call-btn accept" id="incomingCallAccept" type="button" aria-label="接听">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.15 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.61 21 3 13.39 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
         </button>
-        <span class="incoming-call-label">鎺ュ惉</span>
+        <span class="incoming-call-label">接听</span>
       </div>
     </div>
   </div>
@@ -3208,7 +3222,7 @@
 <div class="msg-menu" id="msgMenu" aria-hidden="true">
   <div class="msg-menu-scrim" id="msgMenuScrim"></div>
   <!-- 鎶捣鐨勬皵娉″厠闅嗙敱 JS 鎻掑湪杩欓噷 -->
-  <div class="msg-menu-actions" id="msgMenuActions" role="menu" aria-label="娑堟伅鎿嶄綔">
+  <div class="msg-menu-actions" id="msgMenuActions" role="menu" aria-label="消息操作">
     <button class="msg-act" type="button" data-act="copy" role="menuitem">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
       <span>Copy</span>
@@ -4342,12 +4356,21 @@ function wireSegmented(seg, storeKey){
 wireSegmented(effortSeg, "companion_pick_effort");
 
 const MODEL_CHOICES = [
-  { value:"~anthropic/claude-fable-latest", label:"Fable 5", badge:"Pro", desc:"Expressive companion style" },
-  { value:"anthropic/claude-opus-4.6", label:"Opus 4.6", badge:"Pro", desc:"Strongest for deep emotional conversation" },
-  { value:"anthropic/claude-sonnet-5", label:"Sonnet 4.6 Thinking", desc:"Most efficient for everyday chat" },
-  { value:"nvidia/nemotron-3-ultra-550b-a55b:free", label:"Nemotron Free", desc:"Free fallback model" },
-  { value:"cohere/north-mini-code:free", label:"Cohere Free", desc:"Free lightweight fallback" }
+  { value:"deepseek/deepseek-chat-v3-0324", label:"DeepSeek V3", desc:"快速日常对话，强推理能力" },
+  { value:"deepseek/deepseek-r1", label:"DeepSeek R1", badge:"Thinking", desc:"深度推理，思维链模式" },
+  { value:"qwen/qwen-2.5-72b-instruct", label:"Qwen 2.5 72B", desc:"阿里通义千问，多语言强项" },
+  { value:"nvidia/nemotron-3-ultra-550b-a55b:free", label:"Nemotron Free", desc:"NVIDIA 免费模型，轻量快速" },
+  { value:"anthropic/claude-opus-4.8", label:"Claude Opus 4.8", badge:"Latest", desc:"Anthropic 最新旗舰，最强对话" },
+  { value:"anthropic/claude-opus-4.6", label:"Claude Opus 4.6", badge:"Pro", desc:"Anthropic 深度对话专家" },
+  { value:"anthropic/claude-sonnet-4", label:"Claude Sonnet 4", desc:"Anthropic 均衡之选，性价比高" },
+  { value:"openai/gpt-4o", label:"GPT-4o", badge:"Pro", desc:"OpenAI 多模态旗舰" },
+  { value:"openai/gpt-4o-mini", label:"GPT-4o Mini", desc:"OpenAI 轻量快速版" },
+  { value:"google/gemini-2.5-pro", label:"Gemini 2.5 Pro", badge:"Pro", desc:"Google 推理模型" },
+  { value:"google/gemini-2.5-flash", label:"Gemini 2.5 Flash", desc:"Google 快速模型" },
+  { value:"meta-llama/llama-4-maverick", label:"Llama 4 Maverick", desc:"Meta 最新开源模型" },
+  { value:"mistralai/mistral-large", label:"Mistral Large", desc:"Mistral 最强模型" }
 ];
+const modelStatusCache = {};
 
 function modelMeta(model){
   return MODEL_CHOICES.find((m) => m.value === model) || null;
@@ -4356,23 +4379,59 @@ function modelDisplayLabel(model){
   const meta = modelMeta(model);
   if (meta) return meta.label;
   if (!model) return "Select model";
-  if (/opus/i.test(model)) return "Opus 4.6";
-  if (/sonnet/i.test(model)) return "Sonnet 4.6 Thinking";
-  if (/fable/i.test(model)) return "Fable 5";
   return model.split("/").pop().replace(/:free$/i, " Free").replace(/-/g, " ");
+}
+
+/* Live model availability check — goes through relay (same network as bridge) */
+async function checkModelStatus(model){
+  if (modelStatusCache[model] && Date.now() - modelStatusCache[model].ts < 60000){
+    return modelStatusCache[model].status;
+  }
+  try{
+    const r = await fetch(API_BASE + "/app/model/check?model=" + encodeURIComponent(model), {
+      headers:{"Authorization":"Bearer " + secret}
+    });
+    if (r.ok){
+      const d = await r.json();
+      const status = d.status || "unavailable";
+      modelStatusCache[model] = {status, ts: Date.now()};
+      return status;
+    }
+    modelStatusCache[model] = {status:"unavailable", ts: Date.now()};
+    return "unavailable";
+  }catch(e){
+    modelStatusCache[model] = {status:"unavailable", ts: Date.now()};
+    return "unavailable";
+  }
 }
 function renderModelSheet(activeModel){
   if (!modelSheetList) return;
   modelSheetList.innerHTML = MODEL_CHOICES.map((m) => {
     const active = m.value === activeModel;
+    const cached = modelStatusCache[m.value];
+    const stClass = cached ? (cached.status === "available" ? "available" : "unavailable") : "checking";
+    const stLabel = stClass === "checking" ? "Checking\u2026" : stClass === "available" ? "Available" : "Unavailable";
     return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
       <span class="model-copy">
         <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
         <span class="model-desc">${escapeHtml(m.desc || "")}</span>
+        <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
       </span>
       ${active ? `<span class="model-check" aria-hidden="true"></span>` : ""}
     </button>`;
   }).join("");
+  /* fire off async status checks for models not yet checked */
+  MODEL_CHOICES.forEach((m) => {
+    if (!modelStatusCache[m.value]){
+      checkModelStatus(m.value).then((status) => {
+        const el = modelSheetList.querySelector(`[data-status-for="${CSS.escape(m.value)}"]`);
+        if (el){
+          el.className = "model-status " + (status === "available" ? "available" : "unavailable");
+          el.innerHTML = `<span class="model-status-dot"></span>${status === "available" ? "Available" : "Unavailable"}`;
+        }
+      });
+    }
+  });
 }
 function openSheet(sheet){
   if (!sheet) return;
@@ -4433,7 +4492,7 @@ function setModelUi(model){
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
   if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
-  if (modelHint) modelHint.textContent = matched ? `褰撳墠: ${model}` : `褰撳墠: ${model || "鏈煡"}`;
+  if (modelHint) modelHint.textContent = matched ? `当前: ${model}` : `当前: ${model || "未知"}`;
 }
 async function loadModel(){
   if (USE_MOCK || !secret){
@@ -4647,7 +4706,7 @@ if (statusCopy) statusCopy.addEventListener("click", async () => {
       try{ document.execCommand("copy"); }catch(_){}
       document.body.removeChild(t);
     }
-    showToast("宸插鍒?sid");
+    showToast("已复制");
   }catch(_){ showToast("澶嶅埗澶辫触"); }
 });
 
@@ -4828,7 +4887,7 @@ async function createNewSession(){
     renderSessionList();
     setSessionPopover(false);
     startChat([]);
-    showToast("宸插紑鍚柊 API 绐楀彛");
+    showToast("已开启新 API 窗口");
   }catch(_){
     showToast("新对话失败");
   }
@@ -5155,7 +5214,7 @@ function openStream(){
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(key) });
     }
     await reportSub(sub);
-    paint(true); say("宸插紑 路 浣犳病鍦ㄧ湅鏃讹紝" + AI_NAME + "鐨勬秷鎭細鎺ㄥ埌閿佸睆");
+    paint(true); say("已开 · 你没在看时，" + AI_NAME + "的消息会推到锁屏");
     localStorage.setItem("companion_push", "on");
   }
 
@@ -5183,7 +5242,7 @@ function openStream(){
     try{
       if (want) await enable(); else await disable();
     }catch(err){
-      say("寮€鍚け璐ワ細" + ((err && err.message) || err));
+      say("开启失败：" + ((err && err.message) || err));
       paint(false); localStorage.setItem("companion_push", "off");
     }
   });
@@ -5673,10 +5732,10 @@ function findRenderedMessageRow(key){
 }
 
 function fillMeta(metaEl, ts, isAn){
-  metaEl.innerHTML = `<span>${fmtTime(ts)}</span>` + (isAn ? `<span class="tick">鉁撯湏</span>` : "");
+  metaEl.innerHTML = `<span>${fmtTime(ts)}</span>` + (isAn ? `<span class="tick">✓✓</span>` : "");
 }
 // 鍙戦€佷腑鐨勫皬鏃堕挓:涓ゆ牴鎸囬拡缁曡〃蹇冭浆(SMIL,鏃嬭浆涓績鍐欐(12,12),涓嶄緷璧?transform-box,iOS 绋?銆?
-// reduce-motion 鏃剁粰涓€鍙潤姝㈢殑閽熴€傜姸鎬佽浆 sent 鍚庢鑺傜偣鎸夌鍚嶉噸寤?鈫?鍚屼綅鎹㈡垚 鉁撯湏銆?
+// reduce-motion 鏃剁粰涓€鍙潤姝㈢殑閽熴€傜姸鎬佽浆 sent 鍚庢鑺傜偣鎸夌鍚嶉噸寤?鈫?鍚屼綅鎹㈡垚 ✓✓銆?
 function sendingTickHtml(){
   const face = '<circle cx="12" cy="12" r="8.2"/>';
   const open = '<span class="tick clock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">';
@@ -5943,7 +6002,7 @@ function makeMessage(rowData){
   const metaEl = bubble.querySelector(".meta");
   if (m.status === "sending") metaEl.innerHTML = `<span>${fmtTime(m.ts)}</span>` + sendingTickHtml();
   else if (m.status === "failed"){
-    metaEl.innerHTML = `<span class="fail">鏈€佽揪 路 閲嶈瘯</span>`;
+    metaEl.innerHTML = `<span class="fail">未送达 · 重试</span>`;
     const fail = metaEl.querySelector(".fail");
     fail.addEventListener("click", () => {
       removeMessage(m._key);
@@ -6361,7 +6420,7 @@ function startReplyWait(){
       typingStage = index + 1;
       if (statusEl) statusEl.classList.remove("typing");
       renderStatus();
-      if (index === 2) showToast("杩欐绛夊緱鏈夌偣涔咃紝鍙兘鏄ā鍨嬫帴鍙ｅ崱浣忎簡");
+      if (index === 2) showToast("这次等得有点久，可能是模型接口卡住了");
     }, ms));
   });
 }
