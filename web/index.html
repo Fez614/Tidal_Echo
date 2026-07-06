@@ -487,29 +487,13 @@
   }
 
   .day{
-    align-self: center;
-    margin: 0;
-    font-family: var(--font-en), var(--font-cn);
-    font-size: clamp(12px, 1.6vw, 16px); color: var(--text-faint);
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-    border: none;
+    display: none;
   }
 
   .row{ display:flex; position:relative; margin-top: clamp(14px, 2.2vw, 28px); }
   .day + .row{ margin-top: clamp(12px, 1.8vw, 20px); }
   .new-divider{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: clamp(16px, 2.4vw, 24px);
-    margin: clamp(16px, 2.4vw, 28px) 0 clamp(12px, 1.8vw, 20px);
-    color: var(--text-faint);
-    font-family: var(--font-en), var(--font-cn);
-    font-size: clamp(12px, 1.6vw, 16px);
-    line-height:1;
-    letter-spacing:0;
+    display:none;
   }
   .new-divider::before,
   .new-divider::after{
@@ -592,10 +576,7 @@
   }
   .bubble .txt strong{ font-weight: 700; }
   .meta{
-    display:inline; margin-left: clamp(10px, 1.4vw, 16px); white-space: nowrap;
-    font-family: var(--font-en), var(--font-cn);
-    font-size: clamp(11px, 1.3vw, 14px); color: var(--text-faint); user-select:none;
-    vertical-align: baseline;
+    display:none;
   }
   .meta .tick{ color: var(--tick); margin-left: 7px; letter-spacing:0; }
   .meta .state{ color: var(--accent); }
