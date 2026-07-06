@@ -23,13 +23,27 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 
 <script>
-  /* Theme presets. Persisted in localStorage companion_theme. Set data-theme early to avoid a first-paint flash. */
+  /* Theme presets. Persisted in localStorage companion_theme. Two themes: lamplight (warm beige) and midnight (dark). */
   (function(){
-    var THEMES = ["light","harbor","lamplight"];
+    var THEMES = ["lamplight","midnight"];
+    var MIDNIGHT_CSS = ':root{' +
+      '--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;' +
+      '--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;' +
+      '--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;' +
+      '--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);' +
+      '--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);' +
+      '--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));' +
+      '--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;' +
+      '--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);' +
+      '--status-dot:#6AAF7E;' +
+      '}';
     try{
       var t = localStorage.getItem("companion_theme");
       if (THEMES.indexOf(t) < 0) t = "lamplight";
       document.documentElement.setAttribute("data-theme", t);
+      var el = document.getElementById("themeStyle");
+      if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
+      el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
     }catch(e){ document.documentElement.setAttribute("data-theme", "lamplight"); }
   })();
 </script>
@@ -111,32 +125,6 @@
     --call-hangup-bg: #cf8d92;
     --call-hangup-shadow: rgba(176,96,104,.34);
   }
-  /* 鈹€鈹€ HARBOR 路 娴锋腐(閫氱敤寮€婧愪富棰?/ Tidal Echo) 鈹€鈹€ 涓€у喎璋?渚?fork 浣跨敤;鍙鐩栧甫鑹茬浉鍙橀噺,鍏朵綑缁ф壙 PEARL TIDE */
-  :root[data-theme="harbor"]{
-      --wall-default: var(--wall-harbor);
-      --menu-wall-default: var(--menu-wall-harbor);
-      --bg: #F4F2EF;
-      --header-bg: #F4F2EF;
-      --hairline: rgba(74,93,108,.20);
-      --text: #36404B;
-      --text-soft: #5E6B78;
-      --text-faint: #9197A0;
-      --bubble-ai-bg: #EAE6E4;
-      --bubble-ai-fg: #36404B;
-      --bubble-human-bg: #E1E0E3;
-      --bubble-human-fg: #36404B;
-      --accent: #4A5D6C;
-      --send-bg: #4A5D6C;
-      --tick: #7E8E9C;
-      --accent-fg: #ffffff;
-      --think-flourish: rgba(74, 93, 108, 0.48);
-      --think-label: #5E6B78;
-      --think-body: #4F5D6A;
-      --composer-bg: #EFEBE8;
-      --field-bg: rgba(244,242,239,.92);
-      --slider-thumb: #4A5D6C;
-      --status-dot: #6FA98C;
-  }
   /* 鈹€鈹€ LAMPLIGHT 路 鏆栫伅 鈹€鈹€ 鏇存俯杞殑绾告劅鑱婂ぉ涓婚 */
   :root[data-theme="lamplight"]{
       --wall-default: var(--wall-harbor);
@@ -168,6 +156,20 @@
       --card-line: rgba(153,140,119,.16);
       --slider-thumb: #A95F43;
       --status-dot: #8CB889;
+  }
+  :root[data-theme="midnight"]{
+      --wall-default: none;
+      --menu-wall-default: none;
+      --bg: #141618; --header-bg: #141618; --text: #E8E6E2; --text-soft: #A0A1A5; --text-faint: #5C5D62;
+      --bubble-ai-bg: #1E2024; --bubble-ai-fg: #E8E6E2; --bubble-human-bg: #2A2C30; --bubble-human-fg: #E8E6E2;
+      --accent: #D4A06A; --send-bg: #D4A06A; --accent-fg: #141618; --tick: #6E6F74;
+      --think-flourish: rgba(212,160,106,.42); --think-label: #8A8B90; --think-body: #A0A1A5;
+      --composer-bg: #1A1C20; --field-bg: rgba(30,32,36,.92); --field-line: rgba(255,255,255,.08);
+      --shadow: 0 18px 46px rgba(0,0,0,.3); --soft-shadow: 0 10px 24px rgba(0,0,0,.2);
+      --hairline: rgba(255,255,255,.08);
+      --scrim: linear-gradient(180deg, rgba(20,22,24,.7), rgba(20,22,24,.3) 34%, rgba(20,22,24,.12) 70%, rgba(20,22,24,.42));
+      --card-bg: rgba(30,32,36,.58); --card-line: rgba(255,255,255,.06);
+      --slider-thumb: #D4A06A; --status-dot: #6AAF7E;
   }
 
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -3098,6 +3100,30 @@
     line-height:1;
   }
 
+/* Theme toggle in menu */
+.home-theme-row{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 16px;}
+.home-theme-label{font-size:13px;font-weight:600;color:var(--text-soft);letter-spacing:.04em;}
+.home-theme-toggle{display:flex;gap:6px;background:var(--card-bg);border:1px solid var(--card-line);border-radius:20px;padding:3px;}
+.home-theme-opt{width:32px;height:32px;border-radius:50%;border:0;background:transparent;color:var(--text-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.home-theme-opt svg{width:16px;height:16px;}
+.home-theme-opt.active{background:var(--bg);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+/* History panel */
+.history-panel{position:fixed;inset:0;z-index:210;background:var(--bg);transform:translateX(100%);transition:transform .35s var(--ease-out);overflow:hidden;}
+.history-panel.open{transform:translateX(0);}
+.history-panel.hidden{display:none;}
+.history-page{height:100%;display:flex;flex-direction:column;}
+.history-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--hairline);}
+.history-head h1{font-size:20px;font-weight:700;color:var(--text);margin:0;}
+.history-back{width:36px;height:36px;border-radius:50%;border:0;background:var(--card-bg);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.history-scroll{flex:1;overflow-y:auto;padding:12px 20px;}
+.history-list{display:flex;flex-direction:column;gap:8px;}
+.history-item{padding:14px 16px;border-radius:14px;background:var(--card-bg);border:1px solid var(--card-line);cursor:pointer;transition:background .15s;}
+.history-item:active{background:var(--field-bg);}
+.history-item-preview{font-size:14px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.history-item-date{font-size:12px;color:var(--text-faint);margin-top:6px;}
+.history-item-del{float:right;width:24px;height:24px;border-radius:50%;border:0;background:transparent;color:var(--text-faint);cursor:pointer;font-size:14px;line-height:24px;text-align:center;}
+.history-empty{text-align:center;color:var(--text-faint);padding:40px 20px;font-size:14px;line-height:1.6;}
+
 </style>
 </head>
 <body>
@@ -3132,9 +3158,10 @@
   <div class="terminal hidden" id="terminal"><div class="term-head"><span>same stream / current window</span><button id="termClose" aria-label="close">&times;</button></div><div class="term-body" id="termBody"></div></div>
   <div class="profile-panel hidden" id="profilePanel" aria-hidden="true"><div class="profile-card"><button class="profile-close" id="profileClose" type="button" aria-label="close">&times;</button><div class="profile-avatar" id="profileAvatarBtn"><div class="avatar-img" id="profileAvatarImg"></div></div><div class="profile-name-row"><h3 id="profileName">Claude</h3><input id="profileNameInput" class="hidden" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Claude"><button class="profile-name-edit" id="profileNameEdit" type="button" aria-label="edit">Edit</button></div><p class="profile-bio">&#38543;&#26102;&#22312;&#36825;&#37324;&#65292;&#38506;&#20320;&#32842;&#32842;&#12290;</p><input type="file" id="avatarInput" accept="image/*" class="hidden"></div></div>
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
+<div class="history-panel hidden" id="historyPanel" aria-hidden="true"><div class="history-page"><div class="history-head"><button class="history-back" id="historyClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><h1>History</h1></div><div class="history-scroll"><div class="history-list" id="historyList"></div></div></div></div>
 </div>
 
-<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong>&#36731;&#24555;</strong><span>MOOD</span></div><div><strong>&#19987;&#27880;</strong><span>FOCUS</span></div><div><strong>&#20146;&#36817;</strong><span>BOND</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
+<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong>&#36731;&#24555;</strong><span>MOOD</span></div><div><strong>&#19987;&#27880;</strong><span>FOCUS</span></div><div><strong>&#20146;&#36817;</strong><span>BOND</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><div class="home-theme-row"><span class="home-theme-label">Appearance</span><div class="home-theme-toggle"><button class="home-theme-opt active" id="themeLight" type="button" aria-label="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button><button class="home-theme-opt" id="themeDark" type="button" aria-label="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button></div></div><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="history"><span class="home-card-copy"><strong>History</strong><em>Past conversations</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
 
 <div class="call-overlay hidden" id="callOverlay" aria-hidden="true">
   <div class="call-mini" id="callMini">
@@ -3317,8 +3344,8 @@ const terminalBtn = $("#terminalBtn"), terminalPanel = $("#terminalPanel"), term
 const brainSeg = $("#brainSeg"), brainHint = $("#brainHint");
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 鍥哄畾鑱婂ぉ鑳屾櫙 + 鏈湴澶村儚 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
-const THEMES = ["light","harbor","lamplight"];
-const WALLS = { light: "chat-light.webp", harbor: "chat-harbor.webp", lamplight: "chat-harbor.webp" };
+const THEMES = ["lamplight","midnight"];
+const WALLS = { lamplight: "chat-harbor.webp", midnight: "chat-harbor.webp" };
 const AVATAR_KEY = "companion_avatar";
 const REMARK_KEY = "companion_profile_remark";
 const SESSION_PICK_KEY = "companion_api_session_pick";
@@ -3329,7 +3356,7 @@ let activeApiSession = LEGACY_SESSION_ID;
 
 function currentTheme(){
   const t = document.documentElement.getAttribute("data-theme");
-  return THEMES.indexOf(t) >= 0 ? t : "light";
+  return THEMES.indexOf(t) >= 0 ? t : "lamplight";
 }
 function currentWall(){ return WALLS[currentTheme()] || WALLS.light; }
 
@@ -3586,6 +3613,7 @@ if (menuPanel){
     const item = e.target.closest("[data-menu]");
     if (!item) return;
     if (item.dataset.menu === "chat") closeMenu();
+    else if (item.dataset.menu === "history"){ openHistoryPanel(); closeMenu(); }
     else if (item.dataset.menu === "memory"){
       openMemoryPanel();
     } else if (item.dataset.menu === "settings"){
@@ -3627,6 +3655,7 @@ if (memoryList){
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && menuPanel && !menuPanel.classList.contains("hidden")) closeMenu();
   if (e.key === "Escape" && memoryPanel && !memoryPanel.classList.contains("hidden")) closeMemoryPanel();
+  if (e.key === "Escape" && historyPanel && !historyPanel.classList.contains("hidden")) closeHistoryPanel();
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden){ refreshDays(); updateHomeMenu(); } });
 
@@ -3641,10 +3670,79 @@ function syncThemeSeg(){
   });
 }
 function setTheme(mode){
-  const t = THEMES.indexOf(mode) >= 0 ? mode : "light";
+  const t = THEMES.indexOf(mode) >= 0 ? mode : "lamplight";
   document.documentElement.setAttribute("data-theme", t);
   try{ localStorage.setItem(THEME_KEY, t); }catch(e){}
+  /* Inject midnight CSS overrides */
+  var el = document.getElementById("themeStyle");
+  if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
+  var MIDNIGHT_CSS = ':root{--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);--status-dot:#6AAF7E;}';
+  el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
   syncThemeSeg();
+  syncThemeToggle();
+  applyWall(currentWall());
+}
+
+/* -- Appearance toggle buttons in menu -- */
+function syncThemeToggle(){
+  var cur = currentTheme();
+  var lt = document.getElementById("themeLight");
+  var dk = document.getElementById("themeDark");
+  if (lt) lt.classList.toggle("active", cur !== "midnight");
+  if (dk) dk.classList.toggle("active", cur === "midnight");
+}
+var themeLightBtn = document.getElementById("themeLight");
+var themeDarkBtn = document.getElementById("themeDark");
+if (themeLightBtn) themeLightBtn.addEventListener("click", function(){ setTheme("lamplight"); });
+if (themeDarkBtn) themeDarkBtn.addEventListener("click", function(){ setTheme("midnight"); });
+syncThemeToggle();
+
+/* -- History panel (session-based) -- */
+var historyPanel = document.getElementById("historyPanel");
+var historyList = document.getElementById("historyList");
+function openHistoryPanel(){
+  if (!historyPanel) return;
+  renderSessionHistory();
+  historyPanel.classList.remove("hidden");
+  requestAnimationFrame(function(){ historyPanel.classList.add("open"); });
+}
+function closeHistoryPanel(){
+  if (!historyPanel) return;
+  historyPanel.classList.remove("open");
+  setTimeout(function(){ historyPanel.classList.add("hidden"); }, 350);
+}
+function renderSessionHistory(){
+  if (!historyList) return;
+  if (!apiSessions || apiSessions.length <= 1) {
+    historyList.innerHTML = '<div class="history-empty">No past conversations yet.<br>Use the + button to start a new chat.</div>';
+    return;
+  }
+  var html = "";
+  var sessions = apiSessions.slice().reverse();
+  sessions.forEach(function(s){
+    if (s.id === activeApiSession) return;
+    var title = s.title || "Conversation";
+    var date = s.created_at ? new Date(s.created_at * 1000).toLocaleDateString() : "";
+    html += '<div class="history-item" data-session="' + s.id + '">';
+    html += '<div class="history-item-preview">' + title.replace(/</g,"&lt;") + '</div>';
+    if (date) html += '<div class="history-item-date">' + date + '</div>';
+    html += '</div>';
+  });
+  historyList.innerHTML = html || '<div class="history-empty">No past conversations yet.</div>';
+}
+if (historyList) {
+  historyList.addEventListener("click", function(e){
+    var item = e.target.closest("[data-session]");
+    if (!item) return;
+    var sid = item.dataset.session;
+    if (typeof activateSession === "function") activateSession(sid);
+    closeHistoryPanel();
+    try{ document.getElementById("menuPanel").classList.add("hidden"); }catch(ex){}
+  });
+}
+var historyCloseBtn = document.getElementById("historyClose");
+if (historyCloseBtn) historyCloseBtn.addEventListener("click", closeHistoryPanel);
+  syncThemeToggle();
   applyWall(currentWall());
 }
 syncThemeSeg();
