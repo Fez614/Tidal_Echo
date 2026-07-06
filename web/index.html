@@ -3358,7 +3358,7 @@ function currentTheme(){
   const t = document.documentElement.getAttribute("data-theme");
   return THEMES.indexOf(t) >= 0 ? t : "lamplight";
 }
-function currentWall(){ return WALLS[currentTheme()] || WALLS.light; }
+function currentWall(){ return WALLS[currentTheme()] || WALLS.lamplight; }
 
 function setThemeColor(color){
   var meta = document.querySelector('meta[name="theme-color"]');
@@ -3742,9 +3742,7 @@ if (historyList) {
 }
 var historyCloseBtn = document.getElementById("historyClose");
 if (historyCloseBtn) historyCloseBtn.addEventListener("click", closeHistoryPanel);
-  syncThemeToggle();
-  applyWall(currentWall());
-}
+
 syncThemeSeg();
 if (themeSeg) themeSeg.addEventListener("click", e => {
   const btn = e.target.closest("button[data-val]");
