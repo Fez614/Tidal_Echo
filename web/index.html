@@ -2595,72 +2595,66 @@
   }
   .model-list,
   .model-sheet-list{
-    overflow:hidden;
-    border-radius:18px;
-    background:#F8F5EF;
-    box-shadow:0 1px 12px rgba(0,0,0,.025);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:0;
   }
   .model-option{
     width:100%;
     border:0;
-    background:#F8F5EF;
+    background:#FFF;
     color:#111;
     display:flex;
-    align-items:flex-start;
-    gap:14px;
-    padding:18px 20px 20px;
+    align-items:center;
+    gap:12px;
+    padding:16px 18px;
     text-align:left;
     font-family:inherit;
     cursor:pointer;
-    border-bottom:1px solid rgba(0,0,0,.05);
+    border-radius:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
     min-height:auto;
   }
-  .model-option:last-child{ border-bottom:0; }
+  .model-option:active{ background:#FAFAFA; }
   .model-copy{ flex:1; min-width:0; display:block; }
   .model-name{
     display:block;
-    font-size:25px;
-    line-height:1.12;
+    font-size:20px;
+    line-height:1.2;
     color:#111;
-    font-weight:400;
+    font-weight:500;
     white-space:normal;
   }
   .model-desc{
     display:block;
-    margin-top:8px;
-    font-size:18px;
-    color:#888;
-    line-height:1.32;
+    margin-top:4px;
+    font-size:14px;
+    color:#999;
+    line-height:1.3;
   }
   .model-badge{
     display:inline-flex;
     align-items:center;
-    justify-content:center;
-    margin-left:7px;
-    padding:3px 9px 4px;
+    margin-left:6px;
+    padding:2px 8px;
     border-radius:999px;
     background:#F0F5FB;
     color:#386CA3;
-    font-size:.5em;
+    font-size:11px;
+    font-weight:500;
     vertical-align:middle;
   }
-  .model-check{
-    flex:none;
-    width:24px;
-    height:24px;
-    border-radius:50%;
-    margin-top:4px;
-    border:2px solid transparent;
-  }
-  .model-option.active .model-check{
-    border-color:#111;
-    background:radial-gradient(circle at center, #111 0 38%, transparent 41%);
-  }
-  /* model status indicator */
   .model-status{
-    flex:none;display:inline-flex;align-items:center;gap:5px;
-    font-size:11px;font-weight:600;margin-top:4px;
-    padding:2px 8px;border-radius:999px;
+    flex:none;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    font-weight:500;
+    padding:4px 10px;
+    border-radius:999px;
+    white-space:nowrap;
   }
   .model-status.checking{background:#F5F3EE;color:#9A958B;}
   .model-status.available{background:#E8EFE2;color:#4D9A58;}
@@ -2669,7 +2663,27 @@
   .model-status.checking .model-status-dot{background:#B8B3A8;animation:pulse 1.2s ease infinite;}
   .model-status.available .model-status-dot{background:#4D9A58;}
   .model-status.unavailable .model-status-dot{background:#C25555;}
+  .model-check{
+    flex:none;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:2px solid transparent;
+    display:none;
+  }
+  .model-option.active .model-check{
+    display:block;
+    border-color:#111;
+    background:radial-gradient(circle at center, #111 0 38%, transparent 41%);
+  }
   @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+  .model-sheet h2{
+    margin:0 0 14px;
+    font-size:18px;
+    font-weight:500;
+    color:#333;
+    text-align:center;
+  }
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:30px; padding-right:30px; border-radius:40px 40px 0 0; }
     .attach-grid{ gap:18px; margin-left:-4px; margin-right:-4px; }
@@ -4468,9 +4482,9 @@ function renderModelSheet(activeModel){
       <span class="model-copy">
         <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
         <span class="model-desc">${escapeHtml(m.desc || "")}</span>
-        <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
       </span>
-      ${active ? `<span class="model-check" aria-hidden="true"></span>` : ""}
+      <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
+      <span class="model-check" aria-hidden="true"></span>
     </button>`;
   }).join("");
   /* fire off async status checks for models not yet checked */
