@@ -802,7 +802,6 @@
   .act-k{ color: var(--text-faint); user-select: none; }
   .act-v{ color: var(--think-body); }
 
-
   /* 鈹€鈹€ Composer 鈹€鈹€ */
   .composer{
     position: fixed;
@@ -967,7 +966,6 @@
   .login button:active{ transform: scale(.99); }
   .login .err{ color:#c0533f; font-size:13px; min-height:16px; text-align:center; margin:0; }
   .hidden{ display:none !important; }
-  #modelQuickSelect{ display:none !important; }
   .app.kb .composer{ padding-bottom: 8px; }
 
   /* 鈹€鈹€ Profile page (full-screen settings) 鈹€鈹€ */
@@ -1119,13 +1117,6 @@
   }
 
   /* context slider */
-  .context-slider-wrap{ padding:4px 2px 2px; }
-  .context-slider{
-    -webkit-appearance:none; appearance:none;
-    width:100%; height:4px; border-radius:999px;
-    background: var(--slider-track);
-    outline:none; cursor:pointer; margin:6px 0;
-  }
   .context-slider::-webkit-slider-thumb{
     -webkit-appearance:none; appearance:none;
     width:21px; height:21px; border-radius:50%;
@@ -1168,16 +1159,6 @@
   .action-chevron svg{ width:16px; height:16px; display:block; }
   .action-row.status{ cursor:default; }
   .action-row.status .status-main{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
-  .status-used{ color: var(--text); font-family: var(--font-en), var(--font-cn); font-size:13px; }
-  .status-sid{ display:flex; align-items:center; gap:6px; color: var(--text-faint); font-size:11.5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .status-copy{
-    width:24px; height:24px; flex:none; border:0; border-radius:8px; padding:0;
-    background:transparent; color: var(--text-soft);
-    display:grid; place-items:center; cursor:pointer;
-    transition: color .2s ease, transform .15s ease;
-  }
-  .status-copy:active{ transform: scale(.85); }
-  .status-copy svg{ width:15px; height:15px; display:block; }
 
   /* toast */
   .toast{
@@ -3298,13 +3279,10 @@ const peerNameEl = $("#peerName"), profilePanel = $("#profilePanel");
 const profileClose = $("#profileClose"), moreBtn = $("#moreBtn");
 const profileAvatarBtn = $("#profileAvatarBtn"), profileNameEl = $("#profileName");
 const profileNameInput = $("#profileNameInput"), profileNameEdit = $("#profileNameEdit");
-const modelSeg = $("#modelSeg"), modelHint = $("#modelHint"), modelQuickInput = $("#modelQuickInput"), modelQuickSelect = $("#modelQuickSelect"), modelQuickButton = $("#modelQuickButton"), modelQuickSave = $("#modelQuickSave"), effortSeg = $("#effortSeg"), contextSlider = $("#contextSlider");
+const modelQuickButton = $("#modelQuickButton"), modelQuickSelect = $("#modelQuickSelect");
 const attachSheet = $("#attachSheet"), modelSheet = $("#modelSheet"), modelSheetList = $("#modelSheetList"), sheetScrim = $("#sheetScrim");
-const resetRow = $("#resetRow"), swapRow = $("#swapRow"), resumeRow = $("#resumeRow");
-const statusCopy = $("#statusCopy"), statusSidEl = $("#statusSid"), statusUsedEl = $("#statusUsed");
-const sessionBtn = $("#sessionBtn"), sessionPop = $("#sessionPop"), sessionList = $("#sessionList"), sessionNewBtn = $("#sessionNewBtn");
+const sessionPop = $("#sessionPop"), sessionList = $("#sessionList"), sessionNewBtn = $("#sessionNewBtn");
 const terminalBtn = $("#terminalBtn"), terminalPanel = $("#terminalPanel"), terminalBack = $("#terminalBack"), terminalLog = $("#terminalLog"), terminalForm = $("#terminalForm"), terminalInput = $("#terminalInput"), terminalSession = $("#terminalSession");
-const brainSeg = $("#brainSeg"), brainHint = $("#brainHint");
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 鍥哄畾鑱婂ぉ鑳屾櫙 + 鏈湴澶村儚 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
 const THEMES = ["lamplight","midnight"];
@@ -3398,7 +3376,6 @@ function openProfile(){
   profilePanel.classList.remove("hidden");
   // double rAF so the slide-in runs from the off-screen state
   requestAnimationFrame(() => requestAnimationFrame(() => profilePanel.classList.add("open")));
-  refreshContextStatus();
 }
 function closeProfile(){
   if (!profilePanel) return;
@@ -3456,7 +3433,7 @@ function updateHomeMenu(){
     menuDate.textContent = new Intl.DateTimeFormat("en-US", { weekday:"long", month:"long", day:"numeric" }).format(now);
   }
   if (menuModelLabel){
-    const current = modelQuickSelect && modelQuickSelect.value ? modelQuickSelect.value : "";
+    const current = "";
     menuModelLabel.textContent = current && typeof modelDisplayLabel === "function" ? modelDisplayLabel(current) : "Companion mode";
   }
   refreshMemoryMeta();
@@ -4406,21 +4383,7 @@ function pushSystemErrorReply(text){
   scheduleRender({ stickToBottom: true });
 }
 
-function wireSegmented(seg, storeKey){
-  if (!seg) return;
-  const btns = Array.prototype.slice.call(seg.querySelectorAll("button"));
-  const saved = localStorage.getItem(storeKey);
-  if (saved && btns.some((b) => b.dataset.val === saved)){
-    btns.forEach((b) => b.classList.toggle("active", b.dataset.val === saved));
-  }
-  seg.addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b || !seg.contains(b)) return;
-    btns.forEach((x) => x.classList.toggle("active", x === b));
-    try{ localStorage.setItem(storeKey, b.dataset.val); }catch(_){}
-  });
-}
-wireSegmented(effortSeg, "companion_pick_effort");
+/* wireSegmented and effortSeg removed — no DOM elements */
 
 const MODEL_CHOICES = [
   { value:"deepseek/deepseek-chat-v3-0324", label:"DeepSeek V3", desc:"快速日常对话，强推理能力" },
@@ -4567,16 +4530,7 @@ function closeAllSheets(){
 
 function setModelUi(model){
   let matched = false;
-  if (modelSeg){
-    modelSeg.querySelectorAll("button").forEach((b) => {
-      const active = b.dataset.val === model;
-      b.classList.toggle("active", active);
-      if (active) matched = true;
-    });
-  } else {
     matched = MODEL_CHOICES.some((m) => m.value === model);
-  }
-  if (modelQuickInput) modelQuickInput.value = model || "";
   if (modelQuickSelect){
     const hasOption = Array.prototype.some.call(modelQuickSelect.options, (o) => o.value === model);
     modelQuickSelect.value = hasOption ? model : "";
@@ -4584,12 +4538,10 @@ function setModelUi(model){
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
   if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
-  if (modelHint) modelHint.textContent = matched ? `当前: ${model}` : `当前: ${model || "未知"}`;
 }
 async function loadModel(){
   if (USE_MOCK || !secret){
-    const active = modelSeg && modelSeg.querySelector("button.active");
-    setModelUi(active ? active.dataset.val : "");
+    setModelUi("");
     return;
   }
   try{
@@ -4598,7 +4550,6 @@ async function loadModel(){
     const d = await r.json();
     setModelUi(d.model || "");
   }catch(_){
-    if (modelHint) modelHint.textContent = "模型状态读取失败";
   }
 }
 async function saveModel(model){
@@ -4618,35 +4569,14 @@ async function saveModel(model){
     showToast("妯″瀷鍒囨崲澶辫触");
   }
 }
-if (modelSeg){
-  modelSeg.addEventListener("click", e => {
-    const b = e.target.closest("button[data-val]");
-    if (b) saveModel(b.dataset.val);
-  });
-}
-if (modelQuickSave){
-  modelQuickSave.addEventListener("click", () => saveModel((modelQuickInput && modelQuickInput.value || "").trim()));
-}
 if (modelQuickSelect){
   modelQuickSelect.addEventListener("change", () => {
-    if (modelQuickSelect.value && modelQuickInput) modelQuickInput.value = modelQuickSelect.value;
     if (modelQuickSelect.value) saveModel(modelQuickSelect.value);
-    else if (modelQuickInput) modelQuickInput.focus();
   });
-}
-if (modelQuickInput){
-  modelQuickInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter"){
-      e.preventDefault();
-      saveModel(modelQuickInput.value.trim());
-      inputEl && inputEl.focus();
-    }
-  });
-  modelQuickInput.addEventListener("change", () => saveModel(modelQuickInput.value.trim()));
 }
 if (modelQuickButton){
   modelQuickButton.addEventListener("click", () => {
-    renderModelSheet(modelQuickSelect ? modelQuickSelect.value : "");
+    renderModelSheet("");
     openSheet(modelSheet);
   });
 }
@@ -4667,139 +4597,6 @@ window.addEventListener("keydown", (e) => {
 });
 document.querySelectorAll("[data-sheet-muted]").forEach((btn) => {
   btn.addEventListener("click", () => showToast("这个入口先占位"));
-});
-
-if (contextSlider){
-  const savedContext = localStorage.getItem("companion_pick_context");
-  if (savedContext !== null && savedContext !== "") contextSlider.value = savedContext;
-  contextSlider.addEventListener("input", () => { try{ localStorage.setItem("companion_pick_context", contextSlider.value); }catch(_){} });
-}
-
-function setBrainUi(target){
-  const t = target === "loop" ? "loop" : "desktop";
-  if (brainSeg) brainSeg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.val === t));
-  if (brainHint) brainHint.textContent = t === "loop"
-    ? "现在由服务器 API loop 接消息"
-    : "现在由 Claude Code channel 接消息";
-}
-async function loadBrain(){
-  if (USE_MOCK || !secret){ setBrainUi("desktop"); return; }
-  try{
-    const r = await fetch(`${API_BASE}/app/brain`, { headers: authHeaders() });
-    if (!r.ok) throw new Error("brain " + r.status);
-    const d = await r.json();
-    setBrainUi(d.target || "desktop");
-  }catch(_){
-    setBrainUi("desktop");
-  }
-}
-async function saveBrain(target){
-  if (USE_MOCK){ setBrainUi(target); return; }
-  try{
-    const r = await fetch(`${API_BASE}/app/brain`, {
-      method:"POST",
-      headers:{ ...authHeaders(), "Content-Type":"application/json" },
-      body:JSON.stringify({ target })
-    });
-    if (!r.ok) throw new Error("brain " + r.status);
-    const d = await r.json();
-    setBrainUi(d.target || target);
-    showToast((d.target || target) === "loop" ? "宸插垏鍒?API" : "宸插垏鍒?Desktop");
-  }catch(_){
-    showToast("鍒囨崲澶辫触");
-  }
-}
-if (brainSeg){
-  brainSeg.addEventListener("click", e => {
-    const b = e.target.closest("button[data-val]");
-    if (b) saveBrain(b.dataset.val);
-  });
-}
-
-function shortSid(sid){
-  if (!sid) return "(none)";
-  return sid.length > 10 ? sid.slice(0, 8) + "..." : sid;
-}
-function formatK(n){
-  n = Number(n || 0);
-  if (!Number.isFinite(n) || n <= 0) return "0k";
-  return Math.round(n / 1000) + "k";
-}
-let pendingContextSid = "";
-function applyContextStatus(s){
-  if (!s || s.ok === false){
-    if (statusUsedEl) statusUsedEl.textContent = "context status unknown";
-    if (statusSidEl){ statusSidEl.textContent = "sid: (none)"; statusSidEl.dataset.sid = ""; }
-    pendingContextSid = "";
-    if (resumeRow) resumeRow.classList.add("hidden");
-    return;
-  }
-  const usage = Number(s.usage_tokens || 0);
-  const threshold = String(s.threshold_k || "200k");
-  const pending = s.pending && s.pending.new_sid;
-  pendingContextSid = pending || "";
-  if (resumeRow) resumeRow.classList.toggle("hidden", !pendingContextSid);
-  if (statusUsedEl){
-    statusUsedEl.textContent = `${formatK(usage)} / ${threshold}${pending ? " 路 pending" : ""}`;
-  }
-  const sid = pending || s.active_sid || "";
-  if (statusSidEl){
-    statusSidEl.textContent = "sid: " + shortSid(sid);
-    statusSidEl.dataset.sid = sid;
-  }
-}
-async function apiContextStatus(){
-  // Placeholder: the open relay has no context-control feature 鈥?return static demo numbers.
-  return { ok:true, usage_tokens:96000, threshold_k:"200k", active_sid:"demo-session" };
-}
-async function refreshContextStatus(){
-  try{ applyContextStatus(await apiContextStatus()); }catch(_){}
-}
-async function apiContextAction(action, payload = {}){
-  // Placeholder: no context-control backend in the open relay 鈥?these settings are demo-only.
-  return { ok:true, command:{ action, payload } };
-}
-
-if (resetRow) resetRow.addEventListener("click", async () => {
-  if (!window.confirm("确认 reset？这会开启一个全新窗口。")) return;
-  try{
-    await apiContextAction("reset");
-    showToast("reset 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("reset 发送失败"); }
-});
-if (swapRow)  swapRow.addEventListener("click", async () => {
-  if (!window.confirm("确认 swap？会保留尾部上下文并重启当前窗口。")) return;
-  try{
-    await apiContextAction("swap");
-    showToast("swap 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("swap 发送失败"); }
-});
-if (resumeRow) resumeRow.addEventListener("click", async () => {
-  const sid = pendingContextSid || (statusSidEl && statusSidEl.dataset.sid) || "";
-  if (!sid){ showToast("没有 pending task"); return; }
-  if (!window.confirm("确认 resume pending task？这会重启当前窗口。")) return;
-  try{
-    await apiContextAction("resume", { sid });
-    showToast("resume 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("resume 发送失败"); }
-});
-
-if (statusCopy) statusCopy.addEventListener("click", async () => {
-  const sid = (statusSidEl && statusSidEl.dataset.sid ? statusSidEl.dataset.sid : (statusSidEl ? statusSidEl.textContent : "").replace(/^sid:\s*/, "").trim());
-  try{
-    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(sid);
-    else {
-      const t = document.createElement("textarea");
-      t.value = sid; t.style.position = "fixed"; t.style.opacity = "0";
-      document.body.appendChild(t); t.select();
-      try{ document.execCommand("copy"); }catch(_){}
-      document.body.removeChild(t);
-    }
-    showToast("已复制");
-  }catch(_){ showToast("澶嶅埗澶辫触"); }
 });
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 Mock 灞?USE_MOCK=true 鏃跺惎鐢?鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
@@ -5008,11 +4805,6 @@ async function renameSession(sessionId){
     showToast("改名失败");
   }
 }
-if (sessionBtn) sessionBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  renderSessionList();
-  setSessionPopover(sessionPop ? sessionPop.hidden : false);
-});
 if (sessionNewBtn) sessionNewBtn.addEventListener("click", createNewSession);
 if (sessionList) sessionList.addEventListener("click", (e) => {
   const renameBtn = e.target.closest("button[data-rename]");
@@ -5027,7 +4819,7 @@ if (sessionList) sessionList.addEventListener("click", (e) => {
 });
 document.addEventListener("click", (e) => {
   if (!sessionPop || sessionPop.hidden) return;
-  if (sessionPop.contains(e.target) || (sessionBtn && sessionBtn.contains(e.target))) return;
+  if (sessionPop.contains(e.target)) return;
   setSessionPopover(false);
 });
 
@@ -5243,117 +5035,7 @@ function openStream(){
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 閿佸睆閫氱煡 (Web Push) 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
 /* opt-in,榛樿鍏炽€傚紑 鈫?瑕佹潈闄?+ pushManager.subscribe + 涓婃姤 relay;鍏?鈫?閫€璁?+ 閫氱煡 relay 鍒犮€?
    iOS 鍙湪銆屾坊鍔犲埌涓诲睆銆嶇殑 standalone PWA 閲岃兘鏀舵帹閫?闈?standalone 鐩存帴鎻愮ず銆?*/
-(function pushToggle(){
-  const seg  = $("#pushSeg");
-  const hint = $("#pushHint");
-  if (!seg) return;
-  const supported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
-
-  function isStandalone(){
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  }
-  function paint(on){
-    seg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", (b.dataset.val === "on") === !!on));
-  }
-  function say(msg){ if (hint) hint.textContent = msg || ""; }
-
-  function urlB64ToU8(s){
-    const pad = "=".repeat((4 - s.length % 4) % 4);
-    const raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/"));
-    const u = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) u[i] = raw.charCodeAt(i);
-    return u;
-  }
-
-  let vapidKey = null;
-  async function getKey(){
-    if (vapidKey) return vapidKey;
-    const r = await fetch(`${API_BASE}/app/vapid_public`, { headers: authHeaders() });
-    if (!r.ok) throw new Error("vapid " + r.status);
-    vapidKey = (await r.json()).key;
-    if (!vapidKey) throw new Error("服务器没配公钥");
-    return vapidKey;
-  }
-  async function getSub(){
-    const reg = await navigator.serviceWorker.ready;
-    return reg.pushManager.getSubscription();
-  }
-  async function reportSub(sub){
-    const j = sub.toJSON();
-    const r = await fetch(`${API_BASE}/app/subscribe`, {
-      method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: sub.endpoint, keys: j.keys }),
-    });
-    if (!r.ok) throw new Error("subscribe " + r.status);
-  }
-
-  async function enable(){
-    if (!supported){ say("这台设备不支持网页推送"); paint(false); return; }
-    if (!isStandalone()){
-      say("iPhone 要先把 " + AI_NAME + " 添加到主屏幕，再从主屏幕图标打开才能开通知");
-      paint(false); return;
-    }
-    if (!secret){ say("还没登录，先进应用再开"); paint(false); return; }
-    let perm = Notification.permission;
-    if (perm === "default") perm = await Notification.requestPermission();
-    if (perm !== "granted"){
-      say("通知权限被拒。到 iPhone 设置里手动打开通知");
-      paint(false); localStorage.setItem("companion_push", "off"); return;
-    }
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub){
-      const key = await getKey();
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(key) });
-    }
-    await reportSub(sub);
-    paint(true); say("已开 · 你没在看时，" + AI_NAME + "的消息会推到锁屏");
-    localStorage.setItem("companion_push", "on");
-  }
-
-  async function disable(){
-    try{
-      const sub = await getSub();
-      if (sub){
-        await fetch(`${API_BASE}/app/unsubscribe`, {
-          method: "POST",
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        }).catch(() => {});
-        await sub.unsubscribe().catch(() => {});
-      }
-    } finally {
-      paint(false); say(""); localStorage.setItem("companion_push", "off");
-    }
-  }
-
-  seg.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const want = btn.dataset.val === "on";
-    paint(want);  // 涔愯鍙嶉
-    try{
-      if (want) await enable(); else await disable();
-    }catch(err){
-      say("开启失败：" + ((err && err.message) || err));
-      paint(false); localStorage.setItem("companion_push", "off");
-    }
-  });
-
-  // 鍒濆鍖?鍙嶆槧鐪熷疄璁㈤槄鐘舵€?骞舵妸浠嶆湁鏁堢殑璁㈤槄閲嶆柊涓婃姤涓€娆?绔偣浼氳疆鎹?/ relay 鍙兘琚噸缃繃)
-  (async () => {
-    try{
-      if (!supported || !isStandalone()){ paint(false); return; }
-      const sub = await getSub();
-      const on = !!sub && Notification.permission === "granted";
-      paint(on);
-      if (on){
-        localStorage.setItem("companion_push", "on");
-        reportSub(sub).catch(() => {});
-      }
-    }catch(_){ paint(false); }
-  })();
+/* Push notification UI removed: no #pushSeg / #pushHint in DOM */
 })();
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 杩炴帴鐘舵€?鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
@@ -6542,10 +6224,6 @@ function onMessage(m){
     if (m.active) showTyping(); else hideTyping();
     return;
   }
-  if (m.type === "context_status"){
-    applyContextStatus(m.status);
-    return;
-  }
   if (m.type === "context_command"){
     showToast("涓婁笅鏂囨寚浠ゅ凡鎺掗槦");
     return;
@@ -7136,7 +6814,6 @@ $("#loginForm").addEventListener("submit", async (e) => {
   try{
     // 鐢?history 楠岃瘉瀵嗛挜(401 浼氭姏閿?
     await loadSessions();
-    loadBrain();
     loadModel();
     const msgs = await apiLatestHistory();
     localStorage.setItem(LS_KEY, secret);
@@ -7193,7 +6870,6 @@ function startChat(initialMsgs, { connect = true, fromCache = false } = {}){
   renderVirtualList({ stickToBottom:true });
   if (!fromCache) scheduleCacheSave();
   if (connect) startRealtime();
-  refreshContextStatus();
 }
 
 async function init(){
@@ -7205,7 +6881,6 @@ async function init(){
   appEl.classList.remove("hidden");
   setConn("offline");
   await loadSessions().catch(() => {});
-  loadBrain();
   loadModel();
   let showedCache = false;
   const cached = await readCachedMessages();
@@ -7234,14 +6909,12 @@ init();
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible" || !secret) return;
   backfill();
-  refreshContextStatus();
   if (!es || es.readyState !== 1 || Date.now() - lastStreamEventAt > STREAM_STALE_MS) openStream();
 });
 
 navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",(e)=>{
   if(e.data&&e.data.type==="backfill"&&secret){ backfill(); if(!es||es.readyState!==1) openStream(); }
 });
-
 
 function applyPhysicalScreenVars(){
   const screenH = window.screen && window.screen.height ? Math.round(window.screen.height) : Math.round(window.innerHeight || 0);
