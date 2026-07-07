@@ -4449,11 +4449,36 @@ function modelDisplayLabel(model){
   return model.split("/").pop().replace(/:free$/i, " Free").replace(/-/g, " ");
 }
 
-/* Live model availability check — goes through relay (same network as bridge) */
+/* Live model availability — bridge-reported status is authoritative (region-accurate) */
+let _bridgeStatusCache = null;  // {models: {id: "available"|"unavailable"}, ts: number}
+async function _fetchBridgeStatus(){
+  if (_bridgeStatusCache && Date.now() - _bridgeStatusCache.ts < 120000){
+    return _bridgeStatusCache.models;
+  }
+  try{
+    const r = await fetch(API_BASE + "/app/model/bridge-status", {
+      headers:{"Authorization":"Bearer " + secret}
+    });
+    if (r.ok){
+      const d = await r.json();
+      _bridgeStatusCache = {models: d.models || {}, ts: Date.now()};
+      return _bridgeStatusCache.models;
+    }
+  }catch(e){}
+  return {};
+}
 async function checkModelStatus(model){
   if (modelStatusCache[model] && Date.now() - modelStatusCache[model].ts < 60000){
     return modelStatusCache[model].status;
   }
+  /* Priority 1: bridge-reported (tested from bridge's actual network/region) */
+  const bridgeStatus = await _fetchBridgeStatus();
+  if (bridgeStatus[model]){
+    const st = bridgeStatus[model];
+    modelStatusCache[model] = {status: st, ts: Date.now()};
+    return st;
+  }
+  /* Priority 2: relay server-side check (may not match bridge's region) */
   try{
     const r = await fetch(API_BASE + "/app/model/check?model=" + encodeURIComponent(model), {
       headers:{"Authorization":"Bearer " + secret}

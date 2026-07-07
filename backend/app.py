@@ -1111,6 +1111,31 @@ async def check_model_availability(request: Request, model: str = ""):
     return {"model": model, "status": status}
 
 
+# --- bridge-reported model status (authoritative: bridge knows its own region) --
+_bridge_model_status: dict = {}  # {model_id: {"status": "available"|"unavailable", "ts": ...}}
+
+@app.post("/app/model/report")
+async def report_model_status(request: Request):
+    """Bridge reports which models work/fail from its location (region-aware)."""
+    check_auth(request)
+    body = await request.json()
+    models = body.get("models") if isinstance(body.get("models"), list) else []
+    import time as _time
+    now = _time.time()
+    for entry in models:
+        mid = str(entry.get("model") or "").strip()
+        st = str(entry.get("status") or "").strip()
+        if mid and st in ("available", "unavailable"):
+            _bridge_model_status[mid] = {"status": st, "ts": now}
+    return {"ok": True, "accepted": len(_bridge_model_status)}
+
+@app.get("/app/model/bridge-status")
+async def get_bridge_model_status(request: Request):
+    """PWA reads bridge-reported model availability (region-accurate)."""
+    check_auth(request)
+    return {"models": {mid: info["status"] for mid, info in _bridge_model_status.items()}}
+
+
 @app.get("/app/memories")
 async def get_memories(request: Request, include_archived: bool = True, q: str = ""):
     check_auth(request)

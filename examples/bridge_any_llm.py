@@ -202,6 +202,30 @@ def send_generation_error(err: Exception) -> None:
 
 
 # ---------------------------------------------------------------------------
+# 模型可用性上报(bridge 从自己的网络测试,结果比 relay 端检查更准)
+# ---------------------------------------------------------------------------
+_model_status_reported: dict = {}  # model_id → "available"|"unavailable"
+
+def _report_models() -> None:
+    """Flush cached model statuses to relay so PWA shows accurate availability."""
+    if not _model_status_reported:
+        return
+    payload = [{"model": mid, "status": st} for mid, st in _model_status_reported.items()]
+    try:
+        relay_post_json("/app/model/report", {"models": payload})
+    except Exception as e:
+        log("model-report", f"上报失败: {e}")
+
+def report_model(model_id: str, available: bool) -> None:
+    """Record a model's status and flush to relay (deduped, fire-and-forget)."""
+    st = "available" if available else "unavailable"
+    if _model_status_reported.get(model_id) == st:
+        return  # no change, skip
+    _model_status_reported[model_id] = st
+    _report_models()
+
+
+# ---------------------------------------------------------------------------
 # 历史 → 内存上下文
 # ---------------------------------------------------------------------------
 
@@ -271,15 +295,18 @@ def call_llm(messages: list) -> tuple:
         log("model", route.get("model", ""))
         try:
             text = _one_call(route, messages)
+            report_model(route["model"], True)
             return text, route["model"]
         except urllib.error.HTTPError as e:
             last_err = e
             if e.code in FALLBACK_CODES:
+                report_model(route["model"], False)
                 log("llm", f"{route['model']} HTTP {e.code} → 切下一个")
                 continue
             raise
         except (urllib.error.URLError, TimeoutError) as e:
             last_err = e
+            report_model(route["model"], False)
             log("llm", f"{route['model']} 连接失败({e}) → 切下一个")
             continue
     raise RuntimeError(f"所有模型都失败,最后错误: {last_err}")
