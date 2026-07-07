@@ -2603,10 +2603,12 @@
   .model-status.checking{background:#F5F3EE;color:#9A958B;}
   .model-status.available{background:#E8EFE2;color:#4D9A58;}
   .model-status.unavailable{background:#F6E2E2;color:#C25555;}
+  .model-status.unknown{background:#F5F3EE;color:#9A958B;}
   .model-status-dot{width:6px;height:6px;border-radius:50%;flex:none;}
   .model-status.checking .model-status-dot{background:#B8B3A8;animation:pulse 1.2s ease infinite;}
   .model-status.available .model-status-dot{background:#4D9A58;}
   .model-status.unavailable .model-status-dot{background:#C25555;}
+  .model-status.unknown .model-status-dot{background:#B8B3A8;}
   .model-check{
     flex:none;
     width:22px;
@@ -4387,6 +4389,7 @@ function modelDisplayLabel(model){
 
 /* Live model availability — bridge-reported status is authoritative (region-accurate) */
 let _bridgeStatusCache = null;  // {models: {id: "available"|"unavailable"}, ts: number}
+let _bridgeReachable = false;   // true only when bridge endpoint responded OK
 async function _fetchBridgeStatus(){
   if (_bridgeStatusCache && Date.now() - _bridgeStatusCache.ts < 120000){
     return _bridgeStatusCache.models;
@@ -4397,10 +4400,12 @@ async function _fetchBridgeStatus(){
     });
     if (r.ok){
       const d = await r.json();
+      _bridgeReachable = true;
       _bridgeStatusCache = {models: d.models || {}, ts: Date.now()};
       return _bridgeStatusCache.models;
     }
   }catch(e){}
+  _bridgeReachable = false;
   return {};
 }
 async function checkModelStatus(model){
@@ -4409,18 +4414,26 @@ async function checkModelStatus(model){
   }
   /* Bridge-reported status is the sole authority (region-accurate) */
   const bridgeStatus = await _fetchBridgeStatus();
-  const st = bridgeStatus[model] || "unavailable";
+  let st;
+  if (!_bridgeReachable){
+    st = "unknown";               // bridge offline — can't determine, don't show red
+  }else{
+    st = bridgeStatus[model] || "unavailable";
+  }
   modelStatusCache[model] = {status: st, ts: Date.now()};
   return st;
 }
 
 function renderModelSheet(activeModel){
   if (!modelSheetList) return;
+  const statusClass = (s) => s === "available" ? "available" : s === "unknown" ? "unknown" : s === "checking" ? "checking" : "unavailable";
+  const statusLabel = (s) => s === "available" ? "Available" : s === "unknown" ? "\u2014" : s === "checking" ? "Checking\u2026" : "Unavailable";
   modelSheetList.innerHTML = MODEL_CHOICES.map((m) => {
     const active = m.value === activeModel;
     const cached = modelStatusCache[m.value];
-    const stClass = cached ? (cached.status === "available" ? "available" : "unavailable") : "checking";
-    const stLabel = stClass === "checking" ? "Checking\u2026" : stClass === "available" ? "Available" : "Unavailable";
+    const st = cached ? cached.status : "checking";
+    const stClass = statusClass(st);
+    const stLabel = statusLabel(st);
     return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
       <span class="model-copy">
         <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
@@ -4436,8 +4449,8 @@ function renderModelSheet(activeModel){
       checkModelStatus(m.value).then((status) => {
         const el = modelSheetList.querySelector(`[data-status-for="${CSS.escape(m.value)}"]`);
         if (el){
-          el.className = "model-status " + (status === "available" ? "available" : "unavailable");
-          el.innerHTML = `<span class="model-status-dot"></span>${status === "available" ? "Available" : "Unavailable"}`;
+          el.className = "model-status " + statusClass(status);
+          el.innerHTML = `<span class="model-status-dot"></span>${statusLabel(status)}`;
         }
       });
     }
