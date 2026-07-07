@@ -1056,17 +1056,19 @@ async def set_model(request: Request):
 
 
 # --- model availability check (server-side, same network as bridge) --------
-_OR_KEY = os.environ.get("RELAY_OPENROUTER_KEY", "")
+# Priority: bridge's own key (so check matches real inference), then env var
+_OR_KEY = ""
+_bridge_env = Path(__file__).resolve().parent.parent / "examples" / ".env"
+try:
+    for _line in _bridge_env.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line.startswith("LLM_API_KEY="):
+            _OR_KEY = _line.split("=", 1)[1].strip()
+            break
+except (OSError, FileNotFoundError):
+    pass
 if not _OR_KEY:
-    _bridge_env = Path(__file__).resolve().parent.parent / "examples" / ".env"
-    try:
-        for _line in _bridge_env.read_text(encoding="utf-8").splitlines():
-            _line = _line.strip()
-            if _line.startswith("LLM_API_KEY="):
-                _OR_KEY = _line.split("=", 1)[1].strip()
-                break
-    except (OSError, FileNotFoundError):
-        pass
+    _OR_KEY = os.environ.get("BRIDGE_OPENROUTER_KEY", "") or os.environ.get("RELAY_OPENROUTER_KEY", "")
 _model_check_cache: dict = {}
 
 @app.get("/app/model/check")
