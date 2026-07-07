@@ -3,7 +3,9 @@
 relay.env
 .env
 **/.env
+**/.env.local
 !**/.env.example
+!**/.env.local.example
 # VAPID / TLS private keys
 *.pem
 *.key
@@ -44,3 +46,6 @@ Thumbs.db
 *.bak-*
 .idea/
 .vscode/
+
+# ── local-only docs (not source code) ──────────────────────────────────
+HANDOFF.md

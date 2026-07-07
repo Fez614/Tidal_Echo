@@ -1,11 +1,12 @@
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
+import os
 import urllib.request
 import urllib.error
 
 ROOT = Path(__file__).parent / "web"
-RELAY = "http://127.0.0.1:3011"
-PORT = 4174
+RELAY = os.environ.get("RELAY_ORIGIN", "http://127.0.0.1:3011").rstrip("/")
+PORT = int(os.environ.get("DEV_PORT", os.environ.get("PORT", "4174")))
 
 TYPES = {
     ".html": "text/html; charset=utf-8",

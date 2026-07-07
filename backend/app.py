@@ -1231,4 +1231,5 @@ if __name__ == "__main__":
 
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", os.environ.get("RELAY_PORT", "3011")))
-    uvicorn.run(app, host=host, port=port)
+    log_level = os.environ.get("RELAY_LOG_LEVEL", os.environ.get("LOG_LEVEL", "info")).lower()
+    uvicorn.run(app, host=host, port=port, log_level=log_level)

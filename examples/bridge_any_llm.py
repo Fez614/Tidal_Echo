@@ -40,23 +40,45 @@ import urllib.request
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# 配置(环境变量;也读同目录 .env)
+# 配置(环境变量;也读同目录 .env,开发时 .env.local 覆盖)
 # ---------------------------------------------------------------------------
 
-def _load_dotenv(path: Path) -> None:
-    """极简 .env 加载:KEY=VALUE 逐行;真实环境变量优先。"""
+_BRIDGE_DIR = Path(__file__).resolve().parent
+
+def _load_dotenv(path: Path, override: bool = False) -> dict:
+    """极简 .env 加载。override=True 时强制覆盖;否则 setdefault。返回加载的 kv。"""
+    loaded = {}
     try:
         for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
-            k = k.lstrip("\ufeff")
-            os.environ.setdefault(k.strip(), v.strip())
+            k = k.lstrip("\ufeff").strip()
+            v = v.strip()
+            loaded[k] = v
+            if override:
+                os.environ[k] = v
+            else:
+                os.environ.setdefault(k, v)
     except FileNotFoundError:
         pass
+    return loaded
 
-_load_dotenv(Path(__file__).resolve().parent / ".env")
+# 加载顺序:.env 先装(最低优先) → .env.local 覆盖(本地开发) → 代理变量强制生效
+_env_base = _load_dotenv(_BRIDGE_DIR / ".env")
+_env_local = _load_dotenv(_BRIDGE_DIR / ".env.local", override=True)
+
+# 代理变量必须从 .env 文件生效(系统代理的出口 IP 可能被 OpenRouter 区域封锁)
+_env_merged = {**_env_base, **_env_local}
+for _pk in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"):
+    for _variant in (_pk, _pk.lower()):
+        if _variant in _env_merged:
+            os.environ[_variant] = _env_merged[_variant]
+
+# 日志级别: debug / info(默认) / warn / error
+_LOG_LEVELS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
+LOG_LEVEL = _LOG_LEVELS.get(os.environ.get("LOG_LEVEL", "info").lower(), 1)
 
 RELAY_URL = os.environ.get("RELAY_URL", "").rstrip("/")          # 你的域名 + nginx /relay 前缀
 SECRET    = os.environ.get("RELAY_SECRET", "")                   # 必须和后端 relay.env 一致
@@ -158,7 +180,16 @@ CURSOR_FILE = STATE_DIR / "last_in_id"
 convo: "collections.deque[dict]" = collections.deque(maxlen=max(HISTORY_N * 2, 8))
 
 
+_TAG_LEVEL = {
+    "fatal": 3, "err": 3, "error": 3,
+    "warn": 2, "retry": 2,
+    "debug": 0,
+}
+
 def log(tag: str, msg: str) -> None:
+    level = _TAG_LEVEL.get(tag, 1)  # 默认 info
+    if level < LOG_LEVEL:
+        return
     print(f"[{time.strftime('%H:%M:%S')}] [{tag}] {msg}", file=sys.stderr, flush=True)
 
 
