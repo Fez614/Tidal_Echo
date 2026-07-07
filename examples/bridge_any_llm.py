@@ -58,6 +58,20 @@ def _load_dotenv(path: Path) -> None:
 
 _load_dotenv(Path(__file__).resolve().parent / ".env")
 
+# .env 里的代理必须生效(系统代理的出口 IP 可能被 OpenRouter 区域封锁)
+for _pk in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"):
+    _env_path = Path(__file__).resolve().parent / ".env"
+    try:
+        for _ln in _env_path.read_text(encoding="utf-8").splitlines():
+            _ln = _ln.strip()
+            if _ln.startswith("#") or "=" not in _ln:
+                continue
+            _ek, _ev = _ln.split("=", 1)
+            if _ek.strip().upper() == _pk.upper():
+                os.environ[_pk] = _ev.strip()
+    except FileNotFoundError:
+        pass
+
 RELAY_URL = os.environ.get("RELAY_URL", "").rstrip("/")          # 你的域名 + nginx /relay 前缀
 SECRET    = os.environ.get("RELAY_SECRET", "")                   # 必须和后端 relay.env 一致
 CHAT_ID   = os.environ.get("RELAY_CHAT_ID", "me")               # 单用户通道,固定 "me"
