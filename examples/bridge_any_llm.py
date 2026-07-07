@@ -275,7 +275,16 @@ def _startup_model_probe() -> None:
         report_model(mid, available)
         tag = "✓" if available else "✗"
         log("probe", f"  {tag} {mid}")
-    log("probe", f"探测完成,已上报 {len(_model_status_reported)} 个模型状态")
+    # 确保上报成功(relay 可能在部署中 502,需要等它恢复后重发)
+    for attempt in range(10):
+        try:
+            _report_models()
+            log("probe", f"探测完成,已上报 {len(_model_status_reported)} 个模型状态")
+            return
+        except Exception as e:
+            log("probe", f"上报失败(第{attempt+1}次),3s 后重试: {e}")
+            time.sleep(3)
+    log("probe", f"探测完成,但上报始终失败,共 {len(_model_status_reported)} 个模型状态未送达")
 
 
 # ---------------------------------------------------------------------------
