@@ -359,13 +359,17 @@ def app_payload(msg: dict) -> dict:
 
 def plugin_payload(msg: dict) -> dict:
     meta = msg.get("meta") or {}
-    return {
+    payload = {
         "id": msg["id"],
         "content": msg["text"],
         "user": meta.get("user") or "human",
         "ts": msg["ts"],
         "attachments": meta.get("attachments") or [],
     }
+    api_session = meta.get("api_session") or ""
+    if api_session:
+        payload["api_session"] = api_session
+    return payload
 
 
 def brain_target() -> str:
