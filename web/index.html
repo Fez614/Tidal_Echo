@@ -26,24 +26,10 @@
   /* Theme presets. Persisted in localStorage companion_theme. Two themes: lamplight (warm beige) and midnight (dark). */
   (function(){
     var THEMES = ["lamplight","midnight"];
-    var MIDNIGHT_CSS = ':root{' +
-      '--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;' +
-      '--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;' +
-      '--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;' +
-      '--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);' +
-      '--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);' +
-      '--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));' +
-      '--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;' +
-      '--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);' +
-      '--status-dot:#6AAF7E;' +
-      '}';
     try{
       var t = localStorage.getItem("companion_theme");
       if (THEMES.indexOf(t) < 0) t = "lamplight";
       document.documentElement.setAttribute("data-theme", t);
-      var el = document.getElementById("themeStyle");
-      if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
-      el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
     }catch(e){ document.documentElement.setAttribute("data-theme", "lamplight"); }
   })();
 </script>
@@ -59,50 +45,49 @@
     --font-cn: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
     --wall-light: url("chat-light.webp");
     --wall-harbor: url("chat-harbor.webp");
-    --wall-default: var(--wall-light);
+    --wall-default: none;
     --menu-wall-light: url("menu-light.webp");
     --menu-wall-harbor: url("menu-harbor.webp");
-    --menu-wall-default: var(--menu-wall-light);
+    --menu-wall-default: none;
     --avatar-default: url("avatar-sea.png");
-    /* 鈹€鈹€ PEARL TIDE 路 鐝嶇彔娼睈(default) 鈹€鈹€ */
-    --bg: #F7FAFC;
-    --header-bg: #F7FAFC;
-    --hairline: rgba(120,142,165,.24);
-    --text: #253447;
-    --text-soft: #5E7080;
-    --text-faint: #8A99A8;
-    --bubble-ai-bg: #ECEEF3;
-    --bubble-ai-fg: #253447;
+    /* ── V2 default palette (was Pearl Tide; merged from V2 companion skin) ── */
+    --bg: #F5F3EE;
+    --header-bg: #F5F3EE;
+    --hairline: #E7E3DA;
+    --text: #1A1815;
+    --text-soft: #6B665E;
+    --text-faint: #9A958B;
+    --bubble-ai-bg: transparent;
+    --bubble-ai-fg: #1A1815;
     --bubble-ai-line: transparent;
-    --bubble-human-bg: #DFE5EE;
-    --bubble-human-fg: #253447;
+    --bubble-human-bg: #ECEAE4;
+    --bubble-human-fg: #2B2620;
     --bubble-human-line: transparent;
-    --accent: #4C6378;
-    --send-bg: #2C4056;
-    --tick: #7E93A4;
+    --accent: #48453E;
+    --send-bg: #1A1815;
+    --tick: #B8B3A8;
     --accent-fg: #ffffff;
-    --think-flourish: rgba(99, 121, 142, 0.52);
-    --think-label: #6A7E8E;
-    --think-body: #56697A;
-    --composer-bg: #EEF4FA;
-    --field-bg: rgba(247,250,252,.92);
-    --field-line: rgba(151,169,181,.18);
-    --shadow: 0 18px 46px rgba(74, 93, 108, 0.10);
-    --soft-shadow: 0 14px 34px rgba(86, 104, 118, 0.08);
-    --scrim: linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.04) 68%, rgba(255,255,255,0.22));
-    --header-h: clamp(56px, 10vw, 120px);
-    --side-pad: clamp(16px, 4vw, 40px);
-    --avatar-size: clamp(32px, 5vw, 48px);
-    --bubble-radius: clamp(14px, 2vw, 20px);
+    --think-flourish: #B8B3A8;
+    --think-label: #8A857B;
+    --think-body: #6B665E;
+    --composer-bg: #FBFAF7;
+    --field-bg: #FBFAF7;
+    --field-line: #E7E3DA;
+    --shadow: 0 1px 3px rgba(43, 38, 30, .04);
+    --soft-shadow: 0 1px 2px rgba(43, 38, 30, .035), 0 10px 30px -10px rgba(43, 38, 30, .07);
+    --scrim: none;
+    --header-h: 58px;
+    --side-pad: clamp(14px, 4vw, 20px);
+    --avatar-size: 0px;
+    --bubble-radius: 22px;
     --composer-h: clamp(44px, 6vw, 72px);
     --motion-fast: 150ms;
     --motion-normal: 260ms;
     --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-    /* composer 鍗犳嵁鐨勫簳閮ㄥ尯鍩?鍚畨鍏ㄥ尯/閿洏):scroll 搴?padding 涓庤竟缂樻笎闅愬叡鐢ㄥ悓涓€鏉ユ簮,淇濇寔瀵归綈 */
-    --composer-zone: calc(var(--composer-h) + 116px + env(safe-area-inset-bottom) + var(--keyboard-offset));
-    --edge-fade-top: clamp(24px, 5vw, 52px);
-    --edge-fade-tail: clamp(16px, 3vw, 30px);
-    /* profile / settings 鈥?frosted glass, blends into the wallpaper */
+    --composer-zone: calc(104px + env(safe-area-inset-bottom) + var(--keyboard-offset));
+    --edge-fade-top: 24px;
+    --edge-fade-tail: 20px;
+    /* profile / settings — frosted glass, blends into the wallpaper */
     --card-bg: rgba(244,248,250,.42);
     --card-line: rgba(150,168,182,.12);
     --card-shadow: 0 10px 28px rgba(70,92,108,.05);
@@ -1971,39 +1956,6 @@
   }
 
   /* 鈹€鈹€ UI V2 companion skin: visual replacement for the chat page, logic stays local 鈹€鈹€ */
-  :root{
-    --bg: #F5F3EE;
-    --header-bg: #F5F3EE;
-    --wall-default: none;
-    --menu-wall-default: none;
-    --scrim: none;
-    --hairline: #E7E3DA;
-    --text: #1A1815;
-    --text-soft: #6B665E;
-    --text-faint: #9A958B;
-    --bubble-ai-bg: transparent;
-    --bubble-ai-fg: #1A1815;
-    --bubble-human-bg: #ECEAE4;
-    --bubble-human-fg: #2B2620;
-    --accent: #48453E;
-    --send-bg: #1A1815;
-    --tick: #B8B3A8;
-    --think-flourish: #B8B3A8;
-    --think-label: #8A857B;
-    --think-body: #6B665E;
-    --composer-bg: #FBFAF7;
-    --field-bg: #FBFAF7;
-    --field-line: #E7E3DA;
-    --shadow: 0 1px 3px rgba(43,38,30,.04);
-    --soft-shadow: 0 1px 2px rgba(43,38,30,.035), 0 10px 30px -10px rgba(43,38,30,.07);
-    --header-h: 58px;
-    --side-pad: clamp(14px, 4vw, 20px);
-    --avatar-size: 0px;
-    --bubble-radius: 22px;
-    --composer-zone: calc(104px + env(safe-area-inset-bottom) + var(--keyboard-offset));
-    --edge-fade-top: 24px;
-    --edge-fade-tail: 20px;
-  }
   body{ background:#F5F3EE; font-family:-apple-system, BlinkMacSystemFont, "Noto Sans SC", "Helvetica Neue", sans-serif; letter-spacing:0; }
   .wall{ background:#F5F3EE !important; background-image:none !important; }
   .wall::after{ background:none !important; }
@@ -3616,11 +3568,6 @@ function setTheme(mode){
   const t = THEMES.indexOf(mode) >= 0 ? mode : "lamplight";
   document.documentElement.setAttribute("data-theme", t);
   try{ localStorage.setItem(THEME_KEY, t); }catch(e){}
-  /* Inject midnight CSS overrides */
-  var el = document.getElementById("themeStyle");
-  if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
-  var MIDNIGHT_CSS = ':root{--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);--status-dot:#6AAF7E;}';
-  el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
   syncThemeSeg();
   syncThemeToggle();
   applyWall(currentWall());
