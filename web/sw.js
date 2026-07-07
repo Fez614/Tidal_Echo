@@ -2,7 +2,7 @@
    IMPORTANT: bump CACHE on every front-end change, or installed clients keep the
    old shell (the precached index.html won't refresh until the SW reinstalls). */
 const AI_NAME = "Claude";          // push-title fallback; keep in sync with index.html CONFIG.AI_NAME
-const CACHE = "companion-v8-notimestamp";
+const CACHE = "companion-v9-swupdate";
 const PRECACHE = [
   "./index.html",
   "./chat-light.webp", "./chat-harbor.webp",
@@ -10,6 +10,9 @@ const PRECACHE = [
   "./avatar-sea.png",
 ];
 
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+});
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE)

@@ -7287,9 +7287,26 @@ if (window.visualViewport){
   applyVV();
 }
 
-/* Service Worker */
+/* Service Worker — aggressive update to avoid stale cache */
 if ("serviceWorker" in navigator){
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  window.addEventListener("load", async () => {
+    try{
+      const reg = await navigator.serviceWorker.register("sw.js", { updateViaCache: "none" });
+      reg.update();
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "activated"){
+            sw.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }catch(_){}
+  });
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
 }
 
 </script>
