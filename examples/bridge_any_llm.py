@@ -244,6 +244,19 @@ def report_model(model_id: str, available: bool) -> None:
     _report_models()
 
 
+_HEARTBEAT_INTERVAL = 300  # seconds — re-report every 5 min to survive relay restarts
+
+def _status_heartbeat() -> None:
+    """Periodically re-report all model statuses so relay recovers after restart."""
+    while True:
+        time.sleep(_HEARTBEAT_INTERVAL)
+        if _model_status_reported:
+            try:
+                _report_models()
+            except Exception:
+                pass  # best-effort; next tick will retry
+
+
 def _startup_model_probe() -> None:
     """Background thread: ping every KNOWN_MODELS once, report result to relay.
     Uses the first route's API key/base so the test matches the bridge's real
@@ -527,6 +540,7 @@ def main() -> None:
         log("boot", f"history warm-start skipped ({e})")
     # 后台线程:启动时探测所有模型可用性并上报,不阻塞主循环
     threading.Thread(target=_startup_model_probe, daemon=True, name="model-probe").start()
+    threading.Thread(target=_status_heartbeat, daemon=True, name="status-heartbeat").start()
     stream_inbound(cursor)
 
 
