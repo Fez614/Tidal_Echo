@@ -33,6 +33,7 @@ import collections
 import json
 import os
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -130,6 +131,23 @@ def _model_routes() -> list:
 MODEL_ROUTES = _model_routes()
 FALLBACK_CODES = {401, 403, 404, 408, 409, 429, 500, 502, 503, 504}
 
+# 所有 PWA 模型选择面板里的模型 —— 启动时逐个 ping,上报真实可用性。
+KNOWN_MODELS = [
+    "deepseek/deepseek-chat-v3-0324",
+    "deepseek/deepseek-r1",
+    "qwen/qwen-2.5-72b-instruct",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "anthropic/claude-opus-4.8",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-sonnet-4",
+    "openai/gpt-4o",
+    "openai/gpt-4o-mini",
+    "google/gemini-2.5-pro",
+    "google/gemini-2.5-flash",
+    "meta-llama/llama-4-maverick",
+    "mistralai/mistral-large",
+]
+
 # 断线重连游标:只处理 id > cursor 的消息;重连带 ?since=cursor 让 relay 补发。
 STATE_DIR = Path(os.environ.get("BRIDGE_STATE_DIR", Path.home() / ".companion-bridge"))
 CURSOR_FILE = STATE_DIR / "last_in_id"
@@ -223,6 +241,41 @@ def report_model(model_id: str, available: bool) -> None:
         return  # no change, skip
     _model_status_reported[model_id] = st
     _report_models()
+
+
+def _startup_model_probe() -> None:
+    """Background thread: ping every KNOWN_MODELS once, report result to relay.
+    Uses the first route's API key/base so the test matches the bridge's real
+    network (region-accurate, unlike the relay-side check)."""
+    if not MODEL_ROUTES:
+        return
+    route = MODEL_ROUTES[0]
+    base, key = route["base"], route["key"]
+    log("probe", f"开始探测 {len(KNOWN_MODELS)} 个模型可用性…")
+    for mid in KNOWN_MODELS:
+        try:
+            body = json.dumps({
+                "model": mid,
+                "messages": [{"role": "user", "content": "hi"}],
+                "max_tokens": 1,
+            }, ensure_ascii=False).encode("utf-8")
+            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+            if "openrouter.ai" in base:
+                headers["HTTP-Referer"] = OPENROUTER_REFERER
+                headers["X-Title"] = OPENROUTER_TITLE
+            req = urllib.request.Request(
+                base + "/chat/completions", data=body, method="POST", headers=headers,
+            )
+            with urllib.request.urlopen(req, timeout=15) as _r:
+                available = (_r.status == 200)
+        except urllib.error.HTTPError as e:
+            available = e.code not in FALLBACK_CODES
+        except Exception:
+            available = False
+        report_model(mid, available)
+        tag = "✓" if available else "✗"
+        log("probe", f"  {tag} {mid}")
+    log("probe", f"探测完成,已上报 {len(_model_status_reported)} 个模型状态")
 
 
 # ---------------------------------------------------------------------------
@@ -462,6 +515,8 @@ def main() -> None:
         log("boot", f"warm-start: {len(convo)} msgs in context, cursor={cursor}")
     except Exception as e:
         log("boot", f"history warm-start skipped ({e})")
+    # 后台线程:启动时探测所有模型可用性并上报,不阻塞主循环
+    threading.Thread(target=_startup_model_probe, daemon=True, name="model-probe").start()
     stream_inbound(cursor)
 
 
