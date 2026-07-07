@@ -132,6 +132,7 @@ MODEL_ROUTES = _model_routes()
 FALLBACK_CODES = {401, 403, 404, 408, 409, 429, 500, 502, 503, 504}
 
 # 所有 PWA 模型选择面板里的模型 —— 启动时逐个 ping,上报真实可用性。
+# ── Must stay in sync with MODEL_CHOICES in web/index.html ──
 KNOWN_MODELS = [
     "deepseek/deepseek-chat-v3-0324",
     "deepseek/deepseek-r1",

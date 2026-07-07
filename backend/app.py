@@ -95,13 +95,6 @@ BRAIN_FILE = Path(os.environ.get("RELAY_BRAIN_FILE", str(Path(__file__).parent /
 LOOP_INGEST_URL = os.environ.get("RELAY_LOOP_INGEST_URL", "http://127.0.0.1:3020/loop/ingest")
 STREAM_DRAFT_TTL = int(os.environ.get("RELAY_STREAM_DRAFT_TTL", "600"))
 MODEL_FILE = Path(os.environ.get("RELAY_MODEL_FILE", str(Path(__file__).parent / "model_config.json")))
-MODEL_OPTIONS = [
-    {"label": "Nemotron Free", "model": "nvidia/nemotron-3-ultra-550b-a55b:free"},
-    {"label": "Cohere Free", "model": "cohere/north-mini-code:free"},
-    {"label": "Opus 4.6", "model": "anthropic/claude-opus-4.6"},
-    {"label": "Claude Sonnet", "model": "anthropic/claude-sonnet-5"},
-    {"label": "Claude Fable", "model": "~anthropic/claude-fable-latest"},
-]
 
 if not SECRET:
     raise SystemExit("RELAY_SECRET is required (set it in the systemd EnvironmentFile)")
@@ -386,7 +379,7 @@ def brain_target() -> str:
 
 
 def selected_model() -> str:
-    fallback = MODEL_OPTIONS[0]["model"]
+    fallback = "deepseek/deepseek-chat-v3-0324"
     try:
         data = json.loads(MODEL_FILE.read_text(encoding="utf-8"))
         model = str(data.get("model") or "").strip()
@@ -1040,7 +1033,7 @@ async def set_brain(request: Request):
 @app.get("/app/model")
 async def get_model(request: Request):
     check_auth(request)
-    return {"model": selected_model(), "options": MODEL_OPTIONS}
+    return {"model": selected_model()}
 
 
 @app.post("/app/model")
@@ -1052,63 +1045,8 @@ async def set_model(request: Request):
         raise HTTPException(status_code=400, detail="invalid model")
     MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
     MODEL_FILE.write_text(json.dumps({"model": model}, ensure_ascii=False), encoding="utf-8")
-    return {"model": model, "options": MODEL_OPTIONS}
+    return {"model": model}
 
-
-# --- model availability check (server-side, same network as bridge) --------
-# Priority: bridge's own key (so check matches real inference), then env var
-_OR_KEY = ""
-_bridge_env = Path(__file__).resolve().parent.parent / "examples" / ".env"
-try:
-    for _line in _bridge_env.read_text(encoding="utf-8").splitlines():
-        _line = _line.strip()
-        if _line.startswith("LLM_API_KEY="):
-            _OR_KEY = _line.split("=", 1)[1].strip()
-            break
-except (OSError, FileNotFoundError):
-    pass
-if not _OR_KEY:
-    _OR_KEY = os.environ.get("BRIDGE_OPENROUTER_KEY", "") or os.environ.get("RELAY_OPENROUTER_KEY", "")
-_model_check_cache: dict = {}
-
-@app.get("/app/model/check")
-async def check_model_availability(request: Request, model: str = ""):
-    check_auth(request)
-    if not model:
-        raise HTTPException(status_code=400, detail="model parameter required")
-    if not _OR_KEY:
-        return {"model": model, "status": "unknown", "reason": "no API key configured"}
-    # cache for 60 seconds
-    import time as _time
-    cached = _model_check_cache.get(model)
-    if cached and _time.time() - cached["ts"] < 60:
-        return {"model": model, "status": cached["status"]}
-    # lightweight ping to OpenRouter
-    try:
-        body = json.dumps({
-            "model": model,
-            "messages": [{"role": "user", "content": "hi"}],
-            "max_tokens": 4,
-        }).encode("utf-8")
-        req = urllib.request.Request(
-            "https://openrouter.ai/api/v1/chat/completions",
-            data=body,
-            method="POST",
-            headers={
-                "Authorization": f"Bearer {_OR_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://127.0.0.1:3011",
-                "X-Title": "Tidal Echo Relay",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=15) as r:
-            status = "available" if r.status == 200 else "unavailable"
-    except urllib.error.HTTPError as e:
-        status = "available" if e.code not in (401, 403, 404, 429, 500, 502, 503) else "unavailable"
-    except Exception:
-        status = "unavailable"
-    _model_check_cache[model] = {"status": status, "ts": _time.time()}
-    return {"model": model, "status": status}
 
 
 # --- bridge-reported model status (authoritative: bridge knows its own region) --
