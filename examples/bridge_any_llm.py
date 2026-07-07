@@ -197,12 +197,15 @@ def relay_post_json(path: str, body: dict):
         return json.loads(txt) if txt else {}
 
 
-def send_reply(text: str) -> None:
+def send_reply(text: str, api_session: str = "") -> None:
     """AI 的回复 → 落库 + 扇出到 PWA。"""
-    out = relay_post_json("/channel/out", {
+    payload = {
         "type": "reply", "chat_id": CHAT_ID, "text": text,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    })
+    }
+    if api_session:
+        payload["api_session"] = api_session
+    out = relay_post_json("/channel/out", payload)
     log("out", f"replied (id={out.get('id')})")
 
 
@@ -443,6 +446,7 @@ def active_model_routes() -> list:
 def handle_human_message(msg: dict) -> None:
     content = (msg.get("content") or "").strip()
     atts = msg.get("attachments") or []
+    api_session = msg.get("api_session") or ""
     if atts:
         names = ", ".join(a.get("name") or "file" for a in atts)
         content = (content + "\n" if content else "") + f"(对方发来 {len(atts)} 个附件: {names})"
@@ -464,7 +468,7 @@ def handle_human_message(msg: dict) -> None:
             short_configured = configured.split("/")[-1] if "/" in configured else configured
             reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
         convo.append({"role": "assistant", "content": reply})
-        send_reply(reply)
+        send_reply(reply, api_session=api_session)
 
 
 # ---------------------------------------------------------------------------
