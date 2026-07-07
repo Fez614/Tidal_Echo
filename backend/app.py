@@ -1208,6 +1208,20 @@ async def app_sessions_patch(session_id: str, request: Request):
     return {"sessions": sessions, "active_session": active}
 
 
+@app.delete("/app/sessions/{session_id}")
+async def app_sessions_delete(session_id: str, request: Request):
+    check_auth(request)
+    with db() as conn:
+        row = conn.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, "session not found")
+        if row["active"]:
+            raise HTTPException(409, "cannot delete the active session")
+        conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        conn.commit()
+    return {"ok": True, "deleted": session_id}
+
+
 if __name__ == "__main__":
     import uvicorn
 
