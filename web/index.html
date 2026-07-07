@@ -2530,13 +2530,20 @@
   .model-sheet-list{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:0;
     padding:0;
+    overflow-y:auto;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    background:#F5F2EB;
+    border-radius:16px;
   }
+  .model-sheet-list::-webkit-scrollbar{ display:none; }
   .model-option{
     width:100%;
     border:0;
-    background:#FFF;
+    border-bottom:1px solid rgba(43,38,30,.08);
+    background:transparent;
     color:#111;
     display:flex;
     align-items:center;
@@ -2545,11 +2552,13 @@
     text-align:left;
     font-family:inherit;
     cursor:pointer;
-    border-radius:14px;
-    box-shadow:0 1px 4px rgba(0,0,0,.04);
+    border-radius:0;
+    box-shadow:none;
     min-height:auto;
   }
-  .model-option:active{ background:#FAFAFA; }
+  .model-option:first-child{ border-radius:16px 16px 0 0; }
+  .model-option:last-child{ border-bottom:0; border-radius:0 0 16px 16px; }
+  .model-option:active{ background:rgba(43,38,30,.04); }
   .model-copy{ flex:1; min-width:0; display:block; }
   .model-name{
     display:block;
@@ -2616,6 +2625,20 @@
     font-weight:500;
     color:#333;
     text-align:center;
+  }
+  .model-sheet .sheet-close{
+    top:6px;
+    left:6px;
+    transform:none;
+    width:40px;
+    height:40px;
+    font-size:22px;
+    line-height:1;
+    border-radius:50%;
+    z-index:2;
+  }
+  .model-sheet .sheet-close:active{
+    background:rgba(0,0,0,.06);
   }
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:30px; padding-right:30px; border-radius:40px 40px 0 0; }
