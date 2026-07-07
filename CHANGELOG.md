@@ -6,6 +6,24 @@
 
 ---
 
+## [v0.8.0] — 2026-07-08 单线程聊天（移除 session/history UI）
+
+### 变更
+- **移除 session 弹窗**: 头部下拉的窗口切换器（实际从未被触发过，死代码）
+- **移除 history 面板**: 全屏历史浏览覆盖层及其 CSS
+- **移除 "新对话" 按钮**: 头部 + 按钮不再需要
+- **菜单精简**: 去掉 History 入口，保留 Chat / Memory Bank / Settings
+
+### 简化
+- `loadSessions()` 自动选择活跃 session 或创建新的，无需用户交互
+- 上滑加载旧消息（无限滚动）已有完整实现，无需额外操作
+
+### 清理
+- 删除约 200 行 JS 死代码: renderSessionList, setSessionPopover, createNewSession, renameSession, activateSession, openHistoryPanel, closeHistoryPanel, renderSessionHistory 及相关事件监听
+- 后端 session 基础设施保留（消息标记用）
+
+---
+
 ## [v0.7.0] — 2026-07-07 跨设备同步 + dev/prod 开发流程
 
 ### 新增
@@ -113,6 +131,7 @@
 
 ---
 
+[v0.8.0]: https://github.com/Fez614/Tidal_Echo/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/Fez614/Tidal_Echo/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/Fez614/Tidal_Echo/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/Fez614/Tidal_Echo/compare/v0.4.0...v0.5.0
