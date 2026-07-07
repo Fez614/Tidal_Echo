@@ -4875,7 +4875,9 @@ function effectiveApiSession(){
 function msgInActiveSession(m){
   const meta = (m && m.meta) || {};
   if (!activeApiSession || activeApiSession === LEGACY_SESSION_ID) return !meta.api_session;
-  return meta.api_session === activeApiSession;
+  if (meta.api_session === activeApiSession) return true;
+  if (m && m.from === "ai" && !meta.api_session) return true;
+  return false;
 }
 function sessionFiltered(msgs){
   return (msgs || []).filter(msgInActiveSession);
@@ -6436,7 +6438,7 @@ function applyStreamDelta(ev){
   const meta = { stream_id: streamId, streaming:true };
   if (ev.api_session) meta.api_session = ev.api_session;
   if (ev.api && typeof ev.api === "object") meta.api = ev.api;
-  if (!msgInActiveSession({ meta })) return;
+  if (!msgInActiveSession({ from: "ai", meta })) return;
 
   const mapKey = streamMapKey(streamId, kind);
   const key = streamDrafts.get(mapKey) || streamDraftKey(streamId, kind);
