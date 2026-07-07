@@ -2,7 +2,7 @@
    IMPORTANT: bump CACHE on every front-end change, or installed clients keep the
    old shell (the precached index.html won't refresh until the SW reinstalls). */
 const AI_NAME = "Claude";          // push-title fallback; keep in sync with index.html CONFIG.AI_NAME
-const CACHE = "companion-v9-swupdate";
+const CACHE = "companion-v10-fetchfix";
 const PRECACHE = [
   "./index.html",
   "./chat-light.webp", "./chat-harbor.webp",
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (e) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
           return res;
-        });
+        }).catch(() => caches.match(e.request));
       })
     );
   }
