@@ -2411,12 +2411,6 @@
       right:4px;
       top:4px;
     }
-    .model-option{
-      padding:18px 24px 20px;
-      min-height:92px;
-    }
-    .model-name{ font-size:24px; }
-    .model-desc{ font-size:18px; line-height:1.35; }
   }
   .bottom-sheet-overlay{
     position:fixed;
@@ -2599,7 +2593,8 @@
     background:#FFF;
     box-shadow:0 2px 5px rgba(0,0,0,.18);
   }
-  .model-list{
+  .model-list,
+  .model-sheet-list{
     overflow:hidden;
     border-radius:18px;
     background:#F8F5EF;
@@ -2621,7 +2616,7 @@
     min-height:auto;
   }
   .model-option:last-child{ border-bottom:0; }
-  .model-copy{ flex:1; min-width:0; }
+  .model-copy{ flex:1; min-width:0; display:block; }
   .model-name{
     display:block;
     font-size:25px;
@@ -2686,7 +2681,6 @@
     .sheet-row-icon svg{ width:31px; height:31px; }
     .sheet-switch{ width:96px; height:54px; }
     .sheet-switch::before{ width:44px; height:44px; }
-    .model-option{ padding:24px 30px 26px; }
   }
   @media (max-width: 640px){
     .bottom-sheet{
@@ -2764,40 +2758,6 @@
       height:32px;
       right:4px;
       top:4px;
-    }
-    .model-list{
-      border-radius:18px;
-    }
-    .model-option{
-      min-height:auto;
-      gap:14px;
-      padding:18px 20px 20px;
-    }
-    .model-copy{
-      display:block;
-      min-width:0;
-    }
-    .model-name{
-      display:block;
-      font-size:25px;
-      line-height:1.12;
-      white-space:normal;
-    }
-    .model-desc{
-      display:block;
-      margin-top:8px;
-      font-size:18px;
-      line-height:1.32;
-    }
-    .model-badge{
-      margin-left:7px;
-      padding:3px 9px 4px;
-      font-size:.5em;
-    }
-    .model-check{
-      width:24px;
-      height:24px;
-      margin-top:4px;
     }
   }
 
