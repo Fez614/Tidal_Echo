@@ -26,24 +26,10 @@
   /* Theme presets. Persisted in localStorage companion_theme. Two themes: lamplight (warm beige) and midnight (dark). */
   (function(){
     var THEMES = ["lamplight","midnight"];
-    var MIDNIGHT_CSS = ':root{' +
-      '--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;' +
-      '--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;' +
-      '--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;' +
-      '--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);' +
-      '--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);' +
-      '--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));' +
-      '--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;' +
-      '--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);' +
-      '--status-dot:#6AAF7E;' +
-      '}';
     try{
       var t = localStorage.getItem("companion_theme");
       if (THEMES.indexOf(t) < 0) t = "lamplight";
       document.documentElement.setAttribute("data-theme", t);
-      var el = document.getElementById("themeStyle");
-      if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
-      el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
     }catch(e){ document.documentElement.setAttribute("data-theme", "lamplight"); }
   })();
 </script>
@@ -59,50 +45,49 @@
     --font-cn: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
     --wall-light: url("chat-light.webp");
     --wall-harbor: url("chat-harbor.webp");
-    --wall-default: var(--wall-light);
+    --wall-default: none;
     --menu-wall-light: url("menu-light.webp");
     --menu-wall-harbor: url("menu-harbor.webp");
-    --menu-wall-default: var(--menu-wall-light);
+    --menu-wall-default: none;
     --avatar-default: url("avatar-sea.png");
-    /* 鈹€鈹€ PEARL TIDE 路 鐝嶇彔娼睈(default) 鈹€鈹€ */
-    --bg: #F7FAFC;
-    --header-bg: #F7FAFC;
-    --hairline: rgba(120,142,165,.24);
-    --text: #253447;
-    --text-soft: #5E7080;
-    --text-faint: #8A99A8;
-    --bubble-ai-bg: #ECEEF3;
-    --bubble-ai-fg: #253447;
+    /* ── V2 default palette (was Pearl Tide; merged from V2 companion skin) ── */
+    --bg: #F5F3EE;
+    --header-bg: #F5F3EE;
+    --hairline: #E7E3DA;
+    --text: #1A1815;
+    --text-soft: #6B665E;
+    --text-faint: #9A958B;
+    --bubble-ai-bg: transparent;
+    --bubble-ai-fg: #1A1815;
     --bubble-ai-line: transparent;
-    --bubble-human-bg: #DFE5EE;
-    --bubble-human-fg: #253447;
+    --bubble-human-bg: #ECEAE4;
+    --bubble-human-fg: #2B2620;
     --bubble-human-line: transparent;
-    --accent: #4C6378;
-    --send-bg: #2C4056;
-    --tick: #7E93A4;
+    --accent: #48453E;
+    --send-bg: #1A1815;
+    --tick: #B8B3A8;
     --accent-fg: #ffffff;
-    --think-flourish: rgba(99, 121, 142, 0.52);
-    --think-label: #6A7E8E;
-    --think-body: #56697A;
-    --composer-bg: #EEF4FA;
-    --field-bg: rgba(247,250,252,.92);
-    --field-line: rgba(151,169,181,.18);
-    --shadow: 0 18px 46px rgba(74, 93, 108, 0.10);
-    --soft-shadow: 0 14px 34px rgba(86, 104, 118, 0.08);
-    --scrim: linear-gradient(180deg, rgba(255,255,255,0.38), rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.04) 68%, rgba(255,255,255,0.22));
-    --header-h: clamp(56px, 10vw, 120px);
-    --side-pad: clamp(16px, 4vw, 40px);
-    --avatar-size: clamp(32px, 5vw, 48px);
-    --bubble-radius: clamp(14px, 2vw, 20px);
+    --think-flourish: #B8B3A8;
+    --think-label: #8A857B;
+    --think-body: #6B665E;
+    --composer-bg: #FBFAF7;
+    --field-bg: #FBFAF7;
+    --field-line: #E7E3DA;
+    --shadow: 0 1px 3px rgba(43, 38, 30, .04);
+    --soft-shadow: 0 1px 2px rgba(43, 38, 30, .035), 0 10px 30px -10px rgba(43, 38, 30, .07);
+    --scrim: none;
+    --header-h: 58px;
+    --side-pad: clamp(14px, 4vw, 20px);
+    --avatar-size: 0px;
+    --bubble-radius: 22px;
     --composer-h: clamp(44px, 6vw, 72px);
     --motion-fast: 150ms;
     --motion-normal: 260ms;
     --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-    /* composer 鍗犳嵁鐨勫簳閮ㄥ尯鍩?鍚畨鍏ㄥ尯/閿洏):scroll 搴?padding 涓庤竟缂樻笎闅愬叡鐢ㄥ悓涓€鏉ユ簮,淇濇寔瀵归綈 */
-    --composer-zone: calc(var(--composer-h) + 116px + env(safe-area-inset-bottom) + var(--keyboard-offset));
-    --edge-fade-top: clamp(24px, 5vw, 52px);
-    --edge-fade-tail: clamp(16px, 3vw, 30px);
-    /* profile / settings 鈥?frosted glass, blends into the wallpaper */
+    --composer-zone: calc(104px + env(safe-area-inset-bottom) + var(--keyboard-offset));
+    --edge-fade-top: 24px;
+    --edge-fade-tail: 20px;
+    /* profile / settings — frosted glass, blends into the wallpaper */
     --card-bg: rgba(244,248,250,.42);
     --card-line: rgba(150,168,182,.12);
     --card-shadow: 0 10px 28px rgba(70,92,108,.05);
@@ -802,7 +787,6 @@
   .act-k{ color: var(--text-faint); user-select: none; }
   .act-v{ color: var(--think-body); }
 
-
   /* 鈹€鈹€ Composer 鈹€鈹€ */
   .composer{
     position: fixed;
@@ -967,7 +951,6 @@
   .login button:active{ transform: scale(.99); }
   .login .err{ color:#c0533f; font-size:13px; min-height:16px; text-align:center; margin:0; }
   .hidden{ display:none !important; }
-  #modelQuickSelect{ display:none !important; }
   .app.kb .composer{ padding-bottom: 8px; }
 
   /* 鈹€鈹€ Profile page (full-screen settings) 鈹€鈹€ */
@@ -1119,13 +1102,6 @@
   }
 
   /* context slider */
-  .context-slider-wrap{ padding:4px 2px 2px; }
-  .context-slider{
-    -webkit-appearance:none; appearance:none;
-    width:100%; height:4px; border-radius:999px;
-    background: var(--slider-track);
-    outline:none; cursor:pointer; margin:6px 0;
-  }
   .context-slider::-webkit-slider-thumb{
     -webkit-appearance:none; appearance:none;
     width:21px; height:21px; border-radius:50%;
@@ -1168,16 +1144,6 @@
   .action-chevron svg{ width:16px; height:16px; display:block; }
   .action-row.status{ cursor:default; }
   .action-row.status .status-main{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:0; }
-  .status-used{ color: var(--text); font-family: var(--font-en), var(--font-cn); font-size:13px; }
-  .status-sid{ display:flex; align-items:center; gap:6px; color: var(--text-faint); font-size:11.5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .status-copy{
-    width:24px; height:24px; flex:none; border:0; border-radius:8px; padding:0;
-    background:transparent; color: var(--text-soft);
-    display:grid; place-items:center; cursor:pointer;
-    transition: color .2s ease, transform .15s ease;
-  }
-  .status-copy:active{ transform: scale(.85); }
-  .status-copy svg{ width:15px; height:15px; display:block; }
 
   /* toast */
   .toast{
@@ -1990,39 +1956,6 @@
   }
 
   /* 鈹€鈹€ UI V2 companion skin: visual replacement for the chat page, logic stays local 鈹€鈹€ */
-  :root{
-    --bg: #F5F3EE;
-    --header-bg: #F5F3EE;
-    --wall-default: none;
-    --menu-wall-default: none;
-    --scrim: none;
-    --hairline: #E7E3DA;
-    --text: #1A1815;
-    --text-soft: #6B665E;
-    --text-faint: #9A958B;
-    --bubble-ai-bg: transparent;
-    --bubble-ai-fg: #1A1815;
-    --bubble-human-bg: #ECEAE4;
-    --bubble-human-fg: #2B2620;
-    --accent: #48453E;
-    --send-bg: #1A1815;
-    --tick: #B8B3A8;
-    --think-flourish: #B8B3A8;
-    --think-label: #8A857B;
-    --think-body: #6B665E;
-    --composer-bg: #FBFAF7;
-    --field-bg: #FBFAF7;
-    --field-line: #E7E3DA;
-    --shadow: 0 1px 3px rgba(43,38,30,.04);
-    --soft-shadow: 0 1px 2px rgba(43,38,30,.035), 0 10px 30px -10px rgba(43,38,30,.07);
-    --header-h: 58px;
-    --side-pad: clamp(14px, 4vw, 20px);
-    --avatar-size: 0px;
-    --bubble-radius: 22px;
-    --composer-zone: calc(104px + env(safe-area-inset-bottom) + var(--keyboard-offset));
-    --edge-fade-top: 24px;
-    --edge-fade-tail: 20px;
-  }
   body{ background:#F5F3EE; font-family:-apple-system, BlinkMacSystemFont, "Noto Sans SC", "Helvetica Neue", sans-serif; letter-spacing:0; }
   .wall{ background:#F5F3EE !important; background-image:none !important; }
   .wall::after{ background:none !important; }
@@ -2597,13 +2530,22 @@
   .model-sheet-list{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:0;
     padding:0;
+    overflow-y:auto;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    background:#FDFCF9;
+    border-radius:16px;
   }
+  .model-sheet-list::-webkit-scrollbar{ display:none; }
+  .model-sheet{ scrollbar-width:none; -ms-overflow-style:none; }
+  .model-sheet::-webkit-scrollbar{ display:none; }
   .model-option{
     width:100%;
     border:0;
-    background:#FFF;
+    border-bottom:1px solid rgba(43,38,30,.08);
+    background:transparent;
     color:#111;
     display:flex;
     align-items:center;
@@ -2612,11 +2554,13 @@
     text-align:left;
     font-family:inherit;
     cursor:pointer;
-    border-radius:14px;
-    box-shadow:0 1px 4px rgba(0,0,0,.04);
+    border-radius:0;
+    box-shadow:none;
     min-height:auto;
   }
-  .model-option:active{ background:#FAFAFA; }
+  .model-option:first-child{ border-radius:16px 16px 0 0; }
+  .model-option:last-child{ border-bottom:0; border-radius:0 0 16px 16px; }
+  .model-option:active{ background:rgba(43,38,30,.04); }
   .model-copy{ flex:1; min-width:0; display:block; }
   .model-name{
     display:block;
@@ -2683,6 +2627,20 @@
     font-weight:500;
     color:#333;
     text-align:center;
+  }
+  .model-sheet .sheet-close{
+    top:6px;
+    left:6px;
+    transform:none;
+    width:40px;
+    height:40px;
+    font-size:22px;
+    line-height:1;
+    border-radius:50%;
+    z-index:2;
+  }
+  .model-sheet .sheet-close:active{
+    background:rgba(0,0,0,.06);
   }
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:30px; padding-right:30px; border-radius:40px 40px 0 0; }
@@ -3113,7 +3071,7 @@
   </header>
   <div class="session-pop" id="sessionPop" aria-hidden="true" hidden><div class="session-title">Windows</div><button type="button" id="sessionNewBtn">New window</button><div class="session-list" id="sessionList"></div></div>
   <main class="scroll" id="scroll"><div class="empty" id="empty"><div class="orb"></div><p>&#36825;&#37324;&#21482;&#26377;&#20320;&#21644;Claude&#12290;<br>&#35828;&#28857;&#20160;&#20040;&#21543;&#12290;</p></div></main>
-  <footer class="composer"><div class="field"><div class="model-quick" aria-label="model"><button class="model-pill" id="modelQuickButton" type="button" aria-label="select model">Sonnet 4.6 Thinking</button><select id="modelQuickSelect" aria-label="model"><option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron Free</option><option value="cohere/north-mini-code:free">Cohere Free</option><option value="anthropic/claude-opus-4.6">Opus 4.6</option><option value="anthropic/claude-sonnet-5">Claude Sonnet</option><option value="~anthropic/claude-fable-latest">Claude Fable</option></select></div><button class="floatbtn clip-in-field" id="clipBtn" type="button" aria-label="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><input type="file" id="clipInput" multiple class="hidden" aria-hidden="true"><textarea id="input" rows="1" placeholder="Write a letter..." enterkeyhint="send"></textarea><button class="emojibtn" id="emojiBtn" aria-label="emoji" title="emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.2 4.2 0 0 0 7 0"/><line x1="9" y1="9.3" x2="9" y2="10"/><line x1="15" y1="9.3" x2="15" y2="10"/></svg></button><button class="floatbtn send" id="sendBtn" type="button" aria-label="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg></button></div></footer>
+  <footer class="composer"><div class="field"><div class="model-quick" aria-label="model"><button class="model-pill" id="modelQuickButton" type="button" aria-label="select model">Sonnet 4.6 Thinking</button></div><button class="floatbtn clip-in-field" id="clipBtn" type="button" aria-label="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><input type="file" id="clipInput" multiple class="hidden" aria-hidden="true"><textarea id="input" rows="1" placeholder="Write a letter..." enterkeyhint="send"></textarea><button class="emojibtn" id="emojiBtn" aria-label="emoji" title="emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.2 4.2 0 0 0 7 0"/><line x1="9" y1="9.3" x2="9" y2="10"/><line x1="15" y1="9.3" x2="15" y2="10"/></svg></button><button class="floatbtn send" id="sendBtn" type="button" aria-label="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg></button></div></footer>
   <button class="newmsg-pill" id="newMsgBtn" type="button" aria-label="new messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg><span>New</span></button>
   <div class="sheet-scrim hidden" id="sheetScrim" aria-hidden="true"></div>
   <section class="bottom-sheet hidden" id="attachSheet" aria-hidden="true"><div class="sheet-handle"></div><button class="sheet-close" type="button" data-sheet-close aria-label="close">&times;</button><h2>Add to chat</h2><div class="attach-grid"><button class="attach-card" type="button" data-attach-action="camera"><span class="attach-icon">+</span><span>Camera</span></button><button class="attach-card" type="button" data-attach-action="photos"><span class="attach-icon">+</span><span>Photos</span></button><button class="attach-card" type="button" data-attach-action="files"><span class="attach-icon">+</span><span>Files</span></button></div><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Web search</span></span><span class="sheet-switch" aria-hidden="true"></span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Add to project</span><span class="sheet-row-sub">None</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Tool access</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button></section>
@@ -3298,13 +3256,10 @@ const peerNameEl = $("#peerName"), profilePanel = $("#profilePanel");
 const profileClose = $("#profileClose"), moreBtn = $("#moreBtn");
 const profileAvatarBtn = $("#profileAvatarBtn"), profileNameEl = $("#profileName");
 const profileNameInput = $("#profileNameInput"), profileNameEdit = $("#profileNameEdit");
-const modelSeg = $("#modelSeg"), modelHint = $("#modelHint"), modelQuickInput = $("#modelQuickInput"), modelQuickSelect = $("#modelQuickSelect"), modelQuickButton = $("#modelQuickButton"), modelQuickSave = $("#modelQuickSave"), effortSeg = $("#effortSeg"), contextSlider = $("#contextSlider");
+const modelQuickButton = $("#modelQuickButton");
 const attachSheet = $("#attachSheet"), modelSheet = $("#modelSheet"), modelSheetList = $("#modelSheetList"), sheetScrim = $("#sheetScrim");
-const resetRow = $("#resetRow"), swapRow = $("#swapRow"), resumeRow = $("#resumeRow");
-const statusCopy = $("#statusCopy"), statusSidEl = $("#statusSid"), statusUsedEl = $("#statusUsed");
-const sessionBtn = $("#sessionBtn"), sessionPop = $("#sessionPop"), sessionList = $("#sessionList"), sessionNewBtn = $("#sessionNewBtn");
+const sessionPop = $("#sessionPop"), sessionList = $("#sessionList"), sessionNewBtn = $("#sessionNewBtn");
 const terminalBtn = $("#terminalBtn"), terminalPanel = $("#terminalPanel"), terminalBack = $("#terminalBack"), terminalLog = $("#terminalLog"), terminalForm = $("#terminalForm"), terminalInput = $("#terminalInput"), terminalSession = $("#terminalSession");
-const brainSeg = $("#brainSeg"), brainHint = $("#brainHint");
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 鍥哄畾鑱婂ぉ鑳屾櫙 + 鏈湴澶村儚 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
 const THEMES = ["lamplight","midnight"];
@@ -3398,7 +3353,6 @@ function openProfile(){
   profilePanel.classList.remove("hidden");
   // double rAF so the slide-in runs from the off-screen state
   requestAnimationFrame(() => requestAnimationFrame(() => profilePanel.classList.add("open")));
-  refreshContextStatus();
 }
 function closeProfile(){
   if (!profilePanel) return;
@@ -3456,7 +3410,7 @@ function updateHomeMenu(){
     menuDate.textContent = new Intl.DateTimeFormat("en-US", { weekday:"long", month:"long", day:"numeric" }).format(now);
   }
   if (menuModelLabel){
-    const current = modelQuickSelect && modelQuickSelect.value ? modelQuickSelect.value : "";
+    const current = "";
     menuModelLabel.textContent = current && typeof modelDisplayLabel === "function" ? modelDisplayLabel(current) : "Companion mode";
   }
   refreshMemoryMeta();
@@ -3639,11 +3593,6 @@ function setTheme(mode){
   const t = THEMES.indexOf(mode) >= 0 ? mode : "lamplight";
   document.documentElement.setAttribute("data-theme", t);
   try{ localStorage.setItem(THEME_KEY, t); }catch(e){}
-  /* Inject midnight CSS overrides */
-  var el = document.getElementById("themeStyle");
-  if (!el) { el = document.createElement("style"); el.id = "themeStyle"; document.head.appendChild(el); }
-  var MIDNIGHT_CSS = ':root{--bg:#141618;--header-bg:#141618;--text:#E8E6E2;--text-soft:#A0A1A5;--text-faint:#5C5D62;--bubble-ai-bg:#1E2024;--bubble-ai-fg:#E8E6E2;--bubble-human-bg:#2A2C30;--bubble-human-fg:#E8E6E2;--accent:#D4A06A;--send-bg:#D4A06A;--accent-fg:#141618;--tick:#6E6F74;--composer-bg:#1A1C20;--field-bg:rgba(30,32,36,.92);--field-line:rgba(255,255,255,.08);--shadow:0 18px 46px rgba(0,0,0,.3);--soft-shadow:0 10px 24px rgba(0,0,0,.2);--hairline:rgba(255,255,255,.08);--scrim:linear-gradient(180deg,rgba(20,22,24,.7),rgba(20,22,24,.3) 34%,rgba(20,22,24,.12) 70%,rgba(20,22,24,.42));--think-flourish:rgba(212,160,106,.42);--think-label:#8A8B90;--think-body:#A0A1A5;--card-bg:rgba(30,32,36,.58);--card-line:rgba(255,255,255,.06);--status-dot:#6AAF7E;}';
-  el.textContent = (t === "midnight") ? MIDNIGHT_CSS : "";
   syncThemeSeg();
   syncThemeToggle();
   applyWall(currentWall());
@@ -4406,22 +4355,9 @@ function pushSystemErrorReply(text){
   scheduleRender({ stickToBottom: true });
 }
 
-function wireSegmented(seg, storeKey){
-  if (!seg) return;
-  const btns = Array.prototype.slice.call(seg.querySelectorAll("button"));
-  const saved = localStorage.getItem(storeKey);
-  if (saved && btns.some((b) => b.dataset.val === saved)){
-    btns.forEach((b) => b.classList.toggle("active", b.dataset.val === saved));
-  }
-  seg.addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b || !seg.contains(b)) return;
-    btns.forEach((x) => x.classList.toggle("active", x === b));
-    try{ localStorage.setItem(storeKey, b.dataset.val); }catch(_){}
-  });
-}
-wireSegmented(effortSeg, "companion_pick_effort");
+/* wireSegmented and effortSeg removed — no DOM elements */
 
+/* ── Must stay in sync with KNOWN_MODELS in examples/bridge_any_llm.py ── */
 const MODEL_CHOICES = [
   { value:"deepseek/deepseek-chat-v3-0324", label:"DeepSeek V3", desc:"快速日常对话，强推理能力" },
   { value:"deepseek/deepseek-r1", label:"DeepSeek R1", badge:"Thinking", desc:"深度推理，思维链模式" },
@@ -4471,31 +4407,13 @@ async function checkModelStatus(model){
   if (modelStatusCache[model] && Date.now() - modelStatusCache[model].ts < 60000){
     return modelStatusCache[model].status;
   }
-  /* Priority 1: bridge-reported (tested from bridge's actual network/region) */
+  /* Bridge-reported status is the sole authority (region-accurate) */
   const bridgeStatus = await _fetchBridgeStatus();
-  if (bridgeStatus[model]){
-    const st = bridgeStatus[model];
-    modelStatusCache[model] = {status: st, ts: Date.now()};
-    return st;
-  }
-  /* Priority 2: relay server-side check (may not match bridge's region) */
-  try{
-    const r = await fetch(API_BASE + "/app/model/check?model=" + encodeURIComponent(model), {
-      headers:{"Authorization":"Bearer " + secret}
-    });
-    if (r.ok){
-      const d = await r.json();
-      const status = d.status || "unavailable";
-      modelStatusCache[model] = {status, ts: Date.now()};
-      return status;
-    }
-    modelStatusCache[model] = {status:"unavailable", ts: Date.now()};
-    return "unavailable";
-  }catch(e){
-    modelStatusCache[model] = {status:"unavailable", ts: Date.now()};
-    return "unavailable";
-  }
+  const st = bridgeStatus[model] || "unavailable";
+  modelStatusCache[model] = {status: st, ts: Date.now()};
+  return st;
 }
+
 function renderModelSheet(activeModel){
   if (!modelSheetList) return;
   modelSheetList.innerHTML = MODEL_CHOICES.map((m) => {
@@ -4566,30 +4484,14 @@ function closeAllSheets(){
 }
 
 function setModelUi(model){
-  let matched = false;
-  if (modelSeg){
-    modelSeg.querySelectorAll("button").forEach((b) => {
-      const active = b.dataset.val === model;
-      b.classList.toggle("active", active);
-      if (active) matched = true;
-    });
-  } else {
-    matched = MODEL_CHOICES.some((m) => m.value === model);
-  }
-  if (modelQuickInput) modelQuickInput.value = model || "";
-  if (modelQuickSelect){
-    const hasOption = Array.prototype.some.call(modelQuickSelect.options, (o) => o.value === model);
-    modelQuickSelect.value = hasOption ? model : "";
-  }
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
   if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
-  if (modelHint) modelHint.textContent = matched ? `当前: ${model}` : `当前: ${model || "未知"}`;
 }
+
 async function loadModel(){
   if (USE_MOCK || !secret){
-    const active = modelSeg && modelSeg.querySelector("button.active");
-    setModelUi(active ? active.dataset.val : "");
+    setModelUi("");
     return;
   }
   try{
@@ -4598,7 +4500,6 @@ async function loadModel(){
     const d = await r.json();
     setModelUi(d.model || "");
   }catch(_){
-    if (modelHint) modelHint.textContent = "模型状态读取失败";
   }
 }
 async function saveModel(model){
@@ -4618,35 +4519,9 @@ async function saveModel(model){
     showToast("妯″瀷鍒囨崲澶辫触");
   }
 }
-if (modelSeg){
-  modelSeg.addEventListener("click", e => {
-    const b = e.target.closest("button[data-val]");
-    if (b) saveModel(b.dataset.val);
-  });
-}
-if (modelQuickSave){
-  modelQuickSave.addEventListener("click", () => saveModel((modelQuickInput && modelQuickInput.value || "").trim()));
-}
-if (modelQuickSelect){
-  modelQuickSelect.addEventListener("change", () => {
-    if (modelQuickSelect.value && modelQuickInput) modelQuickInput.value = modelQuickSelect.value;
-    if (modelQuickSelect.value) saveModel(modelQuickSelect.value);
-    else if (modelQuickInput) modelQuickInput.focus();
-  });
-}
-if (modelQuickInput){
-  modelQuickInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter"){
-      e.preventDefault();
-      saveModel(modelQuickInput.value.trim());
-      inputEl && inputEl.focus();
-    }
-  });
-  modelQuickInput.addEventListener("change", () => saveModel(modelQuickInput.value.trim()));
-}
 if (modelQuickButton){
   modelQuickButton.addEventListener("click", () => {
-    renderModelSheet(modelQuickSelect ? modelQuickSelect.value : "");
+    renderModelSheet("");
     openSheet(modelSheet);
   });
 }
@@ -4667,139 +4542,6 @@ window.addEventListener("keydown", (e) => {
 });
 document.querySelectorAll("[data-sheet-muted]").forEach((btn) => {
   btn.addEventListener("click", () => showToast("这个入口先占位"));
-});
-
-if (contextSlider){
-  const savedContext = localStorage.getItem("companion_pick_context");
-  if (savedContext !== null && savedContext !== "") contextSlider.value = savedContext;
-  contextSlider.addEventListener("input", () => { try{ localStorage.setItem("companion_pick_context", contextSlider.value); }catch(_){} });
-}
-
-function setBrainUi(target){
-  const t = target === "loop" ? "loop" : "desktop";
-  if (brainSeg) brainSeg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.val === t));
-  if (brainHint) brainHint.textContent = t === "loop"
-    ? "现在由服务器 API loop 接消息"
-    : "现在由 Claude Code channel 接消息";
-}
-async function loadBrain(){
-  if (USE_MOCK || !secret){ setBrainUi("desktop"); return; }
-  try{
-    const r = await fetch(`${API_BASE}/app/brain`, { headers: authHeaders() });
-    if (!r.ok) throw new Error("brain " + r.status);
-    const d = await r.json();
-    setBrainUi(d.target || "desktop");
-  }catch(_){
-    setBrainUi("desktop");
-  }
-}
-async function saveBrain(target){
-  if (USE_MOCK){ setBrainUi(target); return; }
-  try{
-    const r = await fetch(`${API_BASE}/app/brain`, {
-      method:"POST",
-      headers:{ ...authHeaders(), "Content-Type":"application/json" },
-      body:JSON.stringify({ target })
-    });
-    if (!r.ok) throw new Error("brain " + r.status);
-    const d = await r.json();
-    setBrainUi(d.target || target);
-    showToast((d.target || target) === "loop" ? "宸插垏鍒?API" : "宸插垏鍒?Desktop");
-  }catch(_){
-    showToast("鍒囨崲澶辫触");
-  }
-}
-if (brainSeg){
-  brainSeg.addEventListener("click", e => {
-    const b = e.target.closest("button[data-val]");
-    if (b) saveBrain(b.dataset.val);
-  });
-}
-
-function shortSid(sid){
-  if (!sid) return "(none)";
-  return sid.length > 10 ? sid.slice(0, 8) + "..." : sid;
-}
-function formatK(n){
-  n = Number(n || 0);
-  if (!Number.isFinite(n) || n <= 0) return "0k";
-  return Math.round(n / 1000) + "k";
-}
-let pendingContextSid = "";
-function applyContextStatus(s){
-  if (!s || s.ok === false){
-    if (statusUsedEl) statusUsedEl.textContent = "context status unknown";
-    if (statusSidEl){ statusSidEl.textContent = "sid: (none)"; statusSidEl.dataset.sid = ""; }
-    pendingContextSid = "";
-    if (resumeRow) resumeRow.classList.add("hidden");
-    return;
-  }
-  const usage = Number(s.usage_tokens || 0);
-  const threshold = String(s.threshold_k || "200k");
-  const pending = s.pending && s.pending.new_sid;
-  pendingContextSid = pending || "";
-  if (resumeRow) resumeRow.classList.toggle("hidden", !pendingContextSid);
-  if (statusUsedEl){
-    statusUsedEl.textContent = `${formatK(usage)} / ${threshold}${pending ? " 路 pending" : ""}`;
-  }
-  const sid = pending || s.active_sid || "";
-  if (statusSidEl){
-    statusSidEl.textContent = "sid: " + shortSid(sid);
-    statusSidEl.dataset.sid = sid;
-  }
-}
-async function apiContextStatus(){
-  // Placeholder: the open relay has no context-control feature 鈥?return static demo numbers.
-  return { ok:true, usage_tokens:96000, threshold_k:"200k", active_sid:"demo-session" };
-}
-async function refreshContextStatus(){
-  try{ applyContextStatus(await apiContextStatus()); }catch(_){}
-}
-async function apiContextAction(action, payload = {}){
-  // Placeholder: no context-control backend in the open relay 鈥?these settings are demo-only.
-  return { ok:true, command:{ action, payload } };
-}
-
-if (resetRow) resetRow.addEventListener("click", async () => {
-  if (!window.confirm("确认 reset？这会开启一个全新窗口。")) return;
-  try{
-    await apiContextAction("reset");
-    showToast("reset 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("reset 发送失败"); }
-});
-if (swapRow)  swapRow.addEventListener("click", async () => {
-  if (!window.confirm("确认 swap？会保留尾部上下文并重启当前窗口。")) return;
-  try{
-    await apiContextAction("swap");
-    showToast("swap 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("swap 发送失败"); }
-});
-if (resumeRow) resumeRow.addEventListener("click", async () => {
-  const sid = pendingContextSid || (statusSidEl && statusSidEl.dataset.sid) || "";
-  if (!sid){ showToast("没有 pending task"); return; }
-  if (!window.confirm("确认 resume pending task？这会重启当前窗口。")) return;
-  try{
-    await apiContextAction("resume", { sid });
-    showToast("resume 已记录");
-    setTimeout(refreshContextStatus, 1200);
-  }catch(_){ showToast("resume 发送失败"); }
-});
-
-if (statusCopy) statusCopy.addEventListener("click", async () => {
-  const sid = (statusSidEl && statusSidEl.dataset.sid ? statusSidEl.dataset.sid : (statusSidEl ? statusSidEl.textContent : "").replace(/^sid:\s*/, "").trim());
-  try{
-    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(sid);
-    else {
-      const t = document.createElement("textarea");
-      t.value = sid; t.style.position = "fixed"; t.style.opacity = "0";
-      document.body.appendChild(t); t.select();
-      try{ document.execCommand("copy"); }catch(_){}
-      document.body.removeChild(t);
-    }
-    showToast("已复制");
-  }catch(_){ showToast("澶嶅埗澶辫触"); }
 });
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 Mock 灞?USE_MOCK=true 鏃跺惎鐢?鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
@@ -5008,11 +4750,6 @@ async function renameSession(sessionId){
     showToast("改名失败");
   }
 }
-if (sessionBtn) sessionBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  renderSessionList();
-  setSessionPopover(sessionPop ? sessionPop.hidden : false);
-});
 if (sessionNewBtn) sessionNewBtn.addEventListener("click", createNewSession);
 if (sessionList) sessionList.addEventListener("click", (e) => {
   const renameBtn = e.target.closest("button[data-rename]");
@@ -5027,7 +4764,7 @@ if (sessionList) sessionList.addEventListener("click", (e) => {
 });
 document.addEventListener("click", (e) => {
   if (!sessionPop || sessionPop.hidden) return;
-  if (sessionPop.contains(e.target) || (sessionBtn && sessionBtn.contains(e.target))) return;
+  if (sessionPop.contains(e.target)) return;
   setSessionPopover(false);
 });
 
@@ -5243,118 +4980,7 @@ function openStream(){
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 閿佸睆閫氱煡 (Web Push) 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
 /* opt-in,榛樿鍏炽€傚紑 鈫?瑕佹潈闄?+ pushManager.subscribe + 涓婃姤 relay;鍏?鈫?閫€璁?+ 閫氱煡 relay 鍒犮€?
    iOS 鍙湪銆屾坊鍔犲埌涓诲睆銆嶇殑 standalone PWA 閲岃兘鏀舵帹閫?闈?standalone 鐩存帴鎻愮ず銆?*/
-(function pushToggle(){
-  const seg  = $("#pushSeg");
-  const hint = $("#pushHint");
-  if (!seg) return;
-  const supported = ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window);
-
-  function isStandalone(){
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  }
-  function paint(on){
-    seg.querySelectorAll("button").forEach((b) => b.classList.toggle("active", (b.dataset.val === "on") === !!on));
-  }
-  function say(msg){ if (hint) hint.textContent = msg || ""; }
-
-  function urlB64ToU8(s){
-    const pad = "=".repeat((4 - s.length % 4) % 4);
-    const raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/"));
-    const u = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) u[i] = raw.charCodeAt(i);
-    return u;
-  }
-
-  let vapidKey = null;
-  async function getKey(){
-    if (vapidKey) return vapidKey;
-    const r = await fetch(`${API_BASE}/app/vapid_public`, { headers: authHeaders() });
-    if (!r.ok) throw new Error("vapid " + r.status);
-    vapidKey = (await r.json()).key;
-    if (!vapidKey) throw new Error("服务器没配公钥");
-    return vapidKey;
-  }
-  async function getSub(){
-    const reg = await navigator.serviceWorker.ready;
-    return reg.pushManager.getSubscription();
-  }
-  async function reportSub(sub){
-    const j = sub.toJSON();
-    const r = await fetch(`${API_BASE}/app/subscribe`, {
-      method: "POST",
-      headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: sub.endpoint, keys: j.keys }),
-    });
-    if (!r.ok) throw new Error("subscribe " + r.status);
-  }
-
-  async function enable(){
-    if (!supported){ say("这台设备不支持网页推送"); paint(false); return; }
-    if (!isStandalone()){
-      say("iPhone 要先把 " + AI_NAME + " 添加到主屏幕，再从主屏幕图标打开才能开通知");
-      paint(false); return;
-    }
-    if (!secret){ say("还没登录，先进应用再开"); paint(false); return; }
-    let perm = Notification.permission;
-    if (perm === "default") perm = await Notification.requestPermission();
-    if (perm !== "granted"){
-      say("通知权限被拒。到 iPhone 设置里手动打开通知");
-      paint(false); localStorage.setItem("companion_push", "off"); return;
-    }
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub){
-      const key = await getKey();
-      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(key) });
-    }
-    await reportSub(sub);
-    paint(true); say("已开 · 你没在看时，" + AI_NAME + "的消息会推到锁屏");
-    localStorage.setItem("companion_push", "on");
-  }
-
-  async function disable(){
-    try{
-      const sub = await getSub();
-      if (sub){
-        await fetch(`${API_BASE}/app/unsubscribe`, {
-          method: "POST",
-          headers: { ...authHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: sub.endpoint }),
-        }).catch(() => {});
-        await sub.unsubscribe().catch(() => {});
-      }
-    } finally {
-      paint(false); say(""); localStorage.setItem("companion_push", "off");
-    }
-  }
-
-  seg.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const want = btn.dataset.val === "on";
-    paint(want);  // 涔愯鍙嶉
-    try{
-      if (want) await enable(); else await disable();
-    }catch(err){
-      say("开启失败：" + ((err && err.message) || err));
-      paint(false); localStorage.setItem("companion_push", "off");
-    }
-  });
-
-  // 鍒濆鍖?鍙嶆槧鐪熷疄璁㈤槄鐘舵€?骞舵妸浠嶆湁鏁堢殑璁㈤槄閲嶆柊涓婃姤涓€娆?绔偣浼氳疆鎹?/ relay 鍙兘琚噸缃繃)
-  (async () => {
-    try{
-      if (!supported || !isStandalone()){ paint(false); return; }
-      const sub = await getSub();
-      const on = !!sub && Notification.permission === "granted";
-      paint(on);
-      if (on){
-        localStorage.setItem("companion_push", "on");
-        reportSub(sub).catch(() => {});
-      }
-    }catch(_){ paint(false); }
-  })();
-})();
+/* Push notification UI removed: no #pushSeg / #pushHint in DOM */
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 杩炴帴鐘舵€?鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
 function renderStatus(){
@@ -6542,10 +6168,6 @@ function onMessage(m){
     if (m.active) showTyping(); else hideTyping();
     return;
   }
-  if (m.type === "context_status"){
-    applyContextStatus(m.status);
-    return;
-  }
   if (m.type === "context_command"){
     showToast("涓婁笅鏂囨寚浠ゅ凡鎺掗槦");
     return;
@@ -7136,7 +6758,6 @@ $("#loginForm").addEventListener("submit", async (e) => {
   try{
     // 鐢?history 楠岃瘉瀵嗛挜(401 浼氭姏閿?
     await loadSessions();
-    loadBrain();
     loadModel();
     const msgs = await apiLatestHistory();
     localStorage.setItem(LS_KEY, secret);
@@ -7193,7 +6814,6 @@ function startChat(initialMsgs, { connect = true, fromCache = false } = {}){
   renderVirtualList({ stickToBottom:true });
   if (!fromCache) scheduleCacheSave();
   if (connect) startRealtime();
-  refreshContextStatus();
 }
 
 async function init(){
@@ -7205,7 +6825,6 @@ async function init(){
   appEl.classList.remove("hidden");
   setConn("offline");
   await loadSessions().catch(() => {});
-  loadBrain();
   loadModel();
   let showedCache = false;
   const cached = await readCachedMessages();
@@ -7234,14 +6853,12 @@ init();
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible" || !secret) return;
   backfill();
-  refreshContextStatus();
   if (!es || es.readyState !== 1 || Date.now() - lastStreamEventAt > STREAM_STALE_MS) openStream();
 });
 
 navigator.serviceWorker&&navigator.serviceWorker.addEventListener("message",(e)=>{
   if(e.data&&e.data.type==="backfill"&&secret){ backfill(); if(!es||es.readyState!==1) openStream(); }
 });
-
 
 function applyPhysicalScreenVars(){
   const screenH = window.screen && window.screen.height ? Math.round(window.screen.height) : Math.round(window.innerHeight || 0);
