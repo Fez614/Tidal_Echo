@@ -13,6 +13,20 @@ relay.db-*
 uploads/
 inbox/
 last_in_id
+# Runtime state (written by the app, not source code)
+backend/brain_target
+backend/model_config.json
+backend/relay.env.local
+# Hardcoded-secret bat files (use .ps1 scripts with env files instead)
+start_relay.bat
+
+# ── runtime logs & test artifacts ───────────────────────────────────────
+*.log
+bridge_err.log
+bridge_out.log
+sse_test.txt
+logs/
+memory_imports/
 
 # ── build / deps ────────────────────────────────────────────────────────
 node_modules/
