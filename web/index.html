@@ -280,46 +280,6 @@
   .topbtn svg{ width:24px; height:24px; display:block; }
   .topbtn.more svg{ width:22px; height:22px; }
   .topbtn.terminal.active{ color:var(--accent); }
-  .session-pop{
-    position:absolute;
-    right: calc(var(--side-pad) + 34px);
-    top: calc(env(safe-area-inset-top) + clamp(58px, 8vw, 82px));
-    z-index:30;
-    width:min(82vw, 320px);
-    max-height:min(58vh, 480px);
-    overflow:auto;
-    padding:10px;
-    border-radius:18px;
-    background:var(--panel-bg);
-    border:1px solid var(--card-line);
-    box-shadow:0 18px 50px rgba(30,45,62,.18);
-    -webkit-backdrop-filter:blur(18px);
-    backdrop-filter:blur(18px);
-  }
-  .session-pop[hidden]{ display:none !important; }
-  .session-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 2px 8px; }
-  .session-title{ font-size:12px; color:var(--text-faint); font-family:var(--font-en), var(--font-cn); }
-  .session-new{
-    border:1px solid var(--seg-line); border-radius:999px; padding:5px 9px;
-    background:var(--seg-track); color:var(--text-soft); font:inherit; font-size:11.5px; cursor:pointer;
-  }
-  .session-list{ display:flex; flex-direction:column; gap:2px; }
-  .session-item{
-    border:0; width:100%; background:transparent; color:var(--text);
-    display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px;
-    padding:10px 9px; border-radius:12px; text-align:left; cursor:pointer; font:inherit;
-  }
-  .session-item.active{ background:var(--seg-track); }
-  .session-item:active{ transform:scale(.992); }
-  .session-main{ min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
-  .session-name{ font-size:14px; line-height:1.25; }
-  .session-meta{ font-size:11px; color:var(--text-faint); font-family:var(--font-en), var(--font-cn); }
-  .session-rename{
-    border:0; background:transparent; color:var(--text-faint); width:28px; height:28px;
-    border-radius:50%; display:grid; place-items:center; cursor:pointer; padding:0;
-  }
-  .session-rename:hover{ color:var(--accent); background:var(--seg-track); }
-  .session-rename svg{ width:15px; height:15px; display:block; }
   .terminal-panel{
     position:fixed;
     inset:0;
@@ -2042,13 +2002,6 @@
   .topbtn.terminal{ display:none; }
   .topbtn svg{ width:18px; height:18px; }
   .topbtn.more svg{ width:18px; height:18px; }
-  .session-pop{
-    top:calc(env(safe-area-inset-top) + 62px);
-    right:14px;
-    background:#FFF;
-    border-color:#EDE9E0;
-    box-shadow:0 12px 36px rgba(43,38,30,.11);
-  }
   .scroll{
     padding:10px 20px var(--composer-zone);
     background:#F5F3EE;
@@ -3025,22 +2978,6 @@
 .home-theme-opt{width:32px;height:32px;border-radius:50%;border:0;background:transparent;color:var(--text-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .home-theme-opt svg{width:16px;height:16px;}
 .home-theme-opt.active{background:var(--bg);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
-/* History panel */
-.history-panel{position:fixed;inset:0;z-index:210;background:var(--bg);transform:translateX(100%);transition:transform .35s var(--ease-out);overflow:hidden;}
-.history-panel.open{transform:translateX(0);}
-.history-panel.hidden{display:none;}
-.history-page{height:100%;display:flex;flex-direction:column;}
-.history-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--hairline);}
-.history-head h1{font-size:20px;font-weight:700;color:var(--text);margin:0;}
-.history-back{width:36px;height:36px;border-radius:50%;border:0;background:var(--card-bg);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.history-scroll{flex:1;overflow-y:auto;padding:12px 20px;}
-.history-list{display:flex;flex-direction:column;gap:8px;}
-.history-item{padding:14px 16px;border-radius:14px;background:var(--card-bg);border:1px solid var(--card-line);cursor:pointer;transition:background .15s;}
-.history-item:active{background:var(--field-bg);}
-.history-item-preview{font-size:14px;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.history-item-date{font-size:12px;color:var(--text-faint);margin-top:6px;}
-.history-item-del{float:right;width:24px;height:24px;border-radius:50%;border:0;background:transparent;color:var(--text-faint);cursor:pointer;font-size:14px;line-height:24px;text-align:center;}
-.history-empty{text-align:center;color:var(--text-faint);padding:40px 20px;font-size:14px;line-height:1.6;}
 
 </style>
 </head>
@@ -3068,10 +3005,8 @@
     </button>
     <div class="header-actions">
       <button class="topbtn call" id="callBtn" type="button" aria-label="&#36890;&#35805;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
-      <button class="topbtn new-chat" id="newChatBtn" type="button" aria-label="&#26032;&#23545;&#35805;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
   </header>
-  <div class="session-pop" id="sessionPop" aria-hidden="true" hidden><div class="session-title">Windows</div><button type="button" id="sessionNewBtn">New window</button><div class="session-list" id="sessionList"></div></div>
   <main class="scroll" id="scroll"><div class="empty" id="empty"><div class="orb"></div><p>&#36825;&#37324;&#21482;&#26377;&#20320;&#21644;Claude&#12290;<br>&#35828;&#28857;&#20160;&#20040;&#21543;&#12290;</p></div></main>
   <footer class="composer"><div class="field"><div class="model-quick" aria-label="model"><button class="model-pill" id="modelQuickButton" type="button" aria-label="select model">Sonnet 4.6 Thinking</button></div><button class="floatbtn clip-in-field" id="clipBtn" type="button" aria-label="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><input type="file" id="clipInput" multiple class="hidden" aria-hidden="true"><textarea id="input" rows="1" placeholder="Write a letter..." enterkeyhint="send"></textarea><button class="emojibtn" id="emojiBtn" aria-label="emoji" title="emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.2 4.2 0 0 0 7 0"/><line x1="9" y1="9.3" x2="9" y2="10"/><line x1="15" y1="9.3" x2="15" y2="10"/></svg></button><button class="floatbtn send" id="sendBtn" type="button" aria-label="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg></button></div></footer>
   <button class="newmsg-pill" id="newMsgBtn" type="button" aria-label="new messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg><span>New</span></button>
@@ -3081,10 +3016,9 @@
   <div class="terminal hidden" id="terminal"><div class="term-head"><span>same stream / current window</span><button id="termClose" aria-label="close">&times;</button></div><div class="term-body" id="termBody"></div></div>
   <div class="profile-panel hidden" id="profilePanel" aria-hidden="true"><div class="profile-card"><button class="profile-close" id="profileClose" type="button" aria-label="close">&times;</button><div class="profile-avatar" id="profileAvatarBtn"><div class="avatar-img" id="profileAvatarImg"></div></div><div class="profile-name-row"><h3 id="profileName">Claude</h3><input id="profileNameInput" class="hidden" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Claude"><button class="profile-name-edit" id="profileNameEdit" type="button" aria-label="edit">Edit</button></div><p class="profile-bio">&#38543;&#26102;&#22312;&#36825;&#37324;&#65292;&#38506;&#20320;&#32842;&#32842;&#12290;</p><input type="file" id="avatarInput" accept="image/*" class="hidden"></div></div>
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
-<div class="history-panel hidden" id="historyPanel" aria-hidden="true"><div class="history-page"><div class="history-head"><button class="history-back" id="historyClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><h1>History</h1></div><div class="history-scroll"><div class="history-list" id="historyList"></div></div></div></div>
 </div>
 
-<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong>&#36731;&#24555;</strong><span>MOOD</span></div><div><strong>&#19987;&#27880;</strong><span>FOCUS</span></div><div><strong>&#20146;&#36817;</strong><span>BOND</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><div class="home-theme-row"><span class="home-theme-label">Appearance</span><div class="home-theme-toggle"><button class="home-theme-opt active" id="themeLight" type="button" aria-label="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button><button class="home-theme-opt" id="themeDark" type="button" aria-label="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button></div></div><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="history"><span class="home-card-copy"><strong>History</strong><em>Past conversations</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
+<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong>&#36731;&#24555;</strong><span>MOOD</span></div><div><strong>&#19987;&#27880;</strong><span>FOCUS</span></div><div><strong>&#20146;&#36817;</strong><span>BOND</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><div class="home-theme-row"><span class="home-theme-label">Appearance</span><div class="home-theme-toggle"><button class="home-theme-opt active" id="themeLight" type="button" aria-label="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button><button class="home-theme-opt" id="themeDark" type="button" aria-label="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button></div></div><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
 
 <div class="call-overlay hidden" id="callOverlay" aria-hidden="true">
   <div class="call-mini" id="callMini">
@@ -3260,7 +3194,6 @@ const profileAvatarBtn = $("#profileAvatarBtn"), profileNameEl = $("#profileName
 const profileNameInput = $("#profileNameInput"), profileNameEdit = $("#profileNameEdit");
 const modelQuickButton = $("#modelQuickButton");
 const attachSheet = $("#attachSheet"), modelSheet = $("#modelSheet"), modelSheetList = $("#modelSheetList"), sheetScrim = $("#sheetScrim");
-const sessionPop = $("#sessionPop"), sessionList = $("#sessionList"), sessionNewBtn = $("#sessionNewBtn");
 const terminalBtn = $("#terminalBtn"), terminalPanel = $("#terminalPanel"), terminalBack = $("#terminalBack"), terminalLog = $("#terminalLog"), terminalForm = $("#terminalForm"), terminalInput = $("#terminalInput"), terminalSession = $("#terminalSession");
 
 /* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 鍥哄畾鑱婂ぉ鑳屾櫙 + 鏈湴澶村儚 鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
@@ -3268,7 +3201,6 @@ const THEMES = ["lamplight","midnight"];
 const WALLS = { lamplight: "chat-harbor.webp", midnight: "chat-harbor.webp" };
 const AVATAR_KEY = "companion_avatar";
 const REMARK_KEY = "companion_profile_remark";
-const SESSION_PICK_KEY = "companion_api_session_pick";
 const LEGACY_SESSION_ID = "__legacy__";
 const TERMINAL_WRAP = "[companion:pseudo-terminal]";
 let apiSessions = [];
@@ -3382,7 +3314,6 @@ document.addEventListener("keydown", (e) => {
 
 /* 鈹€鈹€ Main menu (hub 路 entered from the chat back-arrow). Chat returns to chat. 鈹€鈹€ */
 const backBtn = $("#backBtn");
-const newChatBtn = $("#newChatBtn");
 const menuPanel = $("#menuPanel"), menuDaysEl = $("#menuDays");
 const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate"), menuModelLabel = $("#menuModelLabel");
 const memoryPanel = $("#memoryPanel"), memoryClose = $("#memoryClose"), memoryList = $("#memoryList"), memoryCount = $("#memoryCount");
@@ -3528,14 +3459,12 @@ function closeMenu(){
 }
 refreshDays();
 if (backBtn) backBtn.addEventListener("click", openMenu);
-if (newChatBtn) newChatBtn.addEventListener("click", () => { createNewSession(); });
 if (menuCloseBtn) menuCloseBtn.addEventListener("click", closeMenu);
 if (menuPanel){
   menuPanel.addEventListener("click", (e) => {
     const item = e.target.closest("[data-menu]");
     if (!item) return;
     if (item.dataset.menu === "chat") closeMenu();
-    else if (item.dataset.menu === "history"){ openHistoryPanel(); closeMenu(); }
     else if (item.dataset.menu === "memory"){
       openMemoryPanel();
     } else if (item.dataset.menu === "settings"){
@@ -3577,7 +3506,6 @@ if (memoryList){
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && menuPanel && !menuPanel.classList.contains("hidden")) closeMenu();
   if (e.key === "Escape" && memoryPanel && !memoryPanel.classList.contains("hidden")) closeMemoryPanel();
-  if (e.key === "Escape" && historyPanel && !historyPanel.classList.contains("hidden")) closeHistoryPanel();
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden){ refreshDays(); updateHomeMenu(); } });
 
@@ -3613,52 +3541,6 @@ var themeDarkBtn = document.getElementById("themeDark");
 if (themeLightBtn) themeLightBtn.addEventListener("click", function(){ setTheme("lamplight"); });
 if (themeDarkBtn) themeDarkBtn.addEventListener("click", function(){ setTheme("midnight"); });
 syncThemeToggle();
-
-/* -- History panel (session-based) -- */
-var historyPanel = document.getElementById("historyPanel");
-var historyList = document.getElementById("historyList");
-function openHistoryPanel(){
-  if (!historyPanel) return;
-  renderSessionHistory();
-  historyPanel.classList.remove("hidden");
-  requestAnimationFrame(function(){ historyPanel.classList.add("open"); });
-}
-function closeHistoryPanel(){
-  if (!historyPanel) return;
-  historyPanel.classList.remove("open");
-  setTimeout(function(){ historyPanel.classList.add("hidden"); }, 350);
-}
-function renderSessionHistory(){
-  if (!historyList) return;
-  if (!apiSessions || apiSessions.length <= 1) {
-    historyList.innerHTML = '<div class="history-empty">No past conversations yet.<br>Use the + button to start a new chat.</div>';
-    return;
-  }
-  var html = "";
-  var sessions = apiSessions.slice().reverse();
-  sessions.forEach(function(s){
-    if (s.id === activeApiSession) return;
-    var title = s.title || "Conversation";
-    var date = s.created_at ? new Date(s.created_at * 1000).toLocaleDateString() : "";
-    html += '<div class="history-item" data-session="' + s.id + '">';
-    html += '<div class="history-item-preview">' + title.replace(/</g,"&lt;") + '</div>';
-    if (date) html += '<div class="history-item-date">' + date + '</div>';
-    html += '</div>';
-  });
-  historyList.innerHTML = html || '<div class="history-empty">No past conversations yet.</div>';
-}
-if (historyList) {
-  historyList.addEventListener("click", function(e){
-    var item = e.target.closest("[data-session]");
-    if (!item) return;
-    var sid = item.dataset.session;
-    if (typeof activateSession === "function") activateSession(sid);
-    closeHistoryPanel();
-    try{ document.getElementById("menuPanel").classList.add("hidden"); }catch(ex){}
-  });
-}
-var historyCloseBtn = document.getElementById("historyClose");
-if (historyCloseBtn) historyCloseBtn.addEventListener("click", closeHistoryPanel);
 
 syncThemeSeg();
 if (themeSeg) themeSeg.addEventListener("click", e => {
@@ -4662,124 +4544,33 @@ function msgInActiveSession(m){
 function sessionFiltered(msgs){
   return (msgs || []).filter(msgInActiveSession);
 }
-function renderSessionList(){
-  if (!sessionList) return;
-  const rows = [{ id:LEGACY_SESSION_ID, title:"旧主线 / Desktop 记录", since_id:0, virtual:true }].concat(apiSessions || []);
-  sessionList.innerHTML = rows.map((s) => {
-    const active = (s.id || "") === activeApiSession;
-    const meta = s.virtual ? "没有 api_session 标记的记录" : `since #${s.since_id || 0}`;
-    const rename = s.virtual ? "" : `<button class="session-rename" type="button" data-rename="${escapeHtml(s.id || "")}" aria-label="改名" title="改名">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-    </button>`;
-    return `<div class="session-item${active ? " active" : ""}" data-session="${escapeHtml(s.id || "")}" role="button" tabindex="0">
-      <span class="session-main">
-        <span class="session-name">${escapeHtml(s.title || "新对话")}</span>
-        <span class="session-meta">${escapeHtml(meta)}</span>
-      </span>
-      ${rename}
-    </div>`;
-  }).join("");
-}
-function setSessionPopover(open){
-  if (sessionPop) sessionPop.hidden = !open;
-}
 async function loadSessions(){
-  if (USE_MOCK || !secret){ activeApiSession = LEGACY_SESSION_ID; renderSessionList(); return; }
+  if (USE_MOCK || !secret){ activeApiSession = LEGACY_SESSION_ID; return; }
   try{
     const r = await fetch(`${API_BASE}/app/sessions`, { headers: authHeaders() });
     if (!r.ok) throw new Error("sessions " + r.status);
     const d = await r.json();
     apiSessions = Array.isArray(d.sessions) ? d.sessions : [];
-    const saved = (() => { try{ return localStorage.getItem(SESSION_PICK_KEY) || ""; }catch(_){ return ""; } })();
-    const ids = new Set(apiSessions.map((s) => s.id));
-    activeApiSession = (saved === LEGACY_SESSION_ID || ids.has(saved)) ? saved : (d.active_session || LEGACY_SESSION_ID);
+    activeApiSession = d.active_session || LEGACY_SESSION_ID;
+    /* 没有 session 时自动创建一个 */
+    if (!apiSessions.length){
+      try{
+        const cr = await fetch(`${API_BASE}/app/sessions`, {
+          method:"POST", headers:{ ...authHeaders(), "Content-Type":"application/json" },
+          body:JSON.stringify({ title:"对话", activate:true })
+        });
+        if (cr.ok){
+          const cd = await cr.json();
+          apiSessions = Array.isArray(cd.sessions) ? cd.sessions : [];
+          activeApiSession = cd.active_session || (cd.created && cd.created.id) || LEGACY_SESSION_ID;
+        }
+      }catch(_){}
+    }
   }catch(_){
     apiSessions = [];
     activeApiSession = LEGACY_SESSION_ID;
   }
-  renderSessionList();
 }
-async function activateSession(sessionId, { reload = true } = {}){
-  activeApiSession = sessionId || LEGACY_SESSION_ID;
-  try{ localStorage.setItem(SESSION_PICK_KEY, activeApiSession); }catch(_){}
-  resetServerHistoryCache();
-  renderSessionList();
-  setSessionPopover(false);
-  const sid = effectiveApiSession();
-  if (sid){
-    try{
-      await fetch(`${API_BASE}/app/sessions/${encodeURIComponent(sid)}`, {
-        method:"PATCH",
-        headers:{ ...authHeaders(), "Content-Type":"application/json" },
-        body:JSON.stringify({ active:true })
-      });
-    }catch(_){}
-  }
-  if (reload){
-    const msgs = await apiLatestHistory();
-    startChat(msgs);
-  }
-}
-async function createNewSession(){
-  try{
-    const r = await fetch(`${API_BASE}/app/sessions`, {
-      method:"POST",
-      headers:{ ...authHeaders(), "Content-Type":"application/json" },
-      body:JSON.stringify({ title:"新对话", activate:true })
-    });
-    if (!r.ok) throw new Error("sessions " + r.status);
-    const d = await r.json();
-    apiSessions = Array.isArray(d.sessions) ? d.sessions : [];
-    activeApiSession = d.active_session || (d.created && d.created.id) || LEGACY_SESSION_ID;
-    try{ localStorage.setItem(SESSION_PICK_KEY, activeApiSession); }catch(_){}
-    resetServerHistoryCache();
-    renderSessionList();
-    setSessionPopover(false);
-    startChat([]);
-    showToast("已开启新 API 窗口");
-  }catch(_){
-    showToast("新对话失败");
-  }
-}
-async function renameSession(sessionId){
-  const item = apiSessions.find((s) => s.id === sessionId);
-  if (!item) return;
-  const next = prompt("给这个窗口起个名字", item.title || "新对话");
-  if (next == null) return;
-  const title = next.trim();
-  if (!title) return;
-  try{
-    const r = await fetch(`${API_BASE}/app/sessions/${encodeURIComponent(sessionId)}`, {
-      method:"PATCH",
-      headers:{ ...authHeaders(), "Content-Type":"application/json" },
-      body:JSON.stringify({ title })
-    });
-    if (!r.ok) throw new Error("rename " + r.status);
-    const d = await r.json();
-    apiSessions = Array.isArray(d.sessions) ? d.sessions : apiSessions.map((s) => s.id === sessionId ? { ...s, title } : s);
-    renderSessionList();
-    showToast("窗口已改名");
-  }catch(_){
-    showToast("改名失败");
-  }
-}
-if (sessionNewBtn) sessionNewBtn.addEventListener("click", createNewSession);
-if (sessionList) sessionList.addEventListener("click", (e) => {
-  const renameBtn = e.target.closest("button[data-rename]");
-  if (renameBtn){
-    e.preventDefault();
-    e.stopPropagation();
-    renameSession(renameBtn.dataset.rename || "");
-    return;
-  }
-  const row = e.target.closest("[data-session]");
-  if (row) activateSession(row.dataset.session || "");
-});
-document.addEventListener("click", (e) => {
-  if (!sessionPop || sessionPop.hidden) return;
-  if (sessionPop.contains(e.target)) return;
-  setSessionPopover(false);
-});
 
 const HISTORY_FETCH_LIMIT = 500;
 let serverHistoryCache = [];
