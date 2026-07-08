@@ -4910,11 +4910,11 @@ function renderText(t){
 }
 function attImgError(img){
   try{
-    if (img.dataset.failed || /^blob:/.test(img.src || "")) return;  // 鏈湴棰勮/姝ｅ湪鍙戠殑涓嶅姩
+    if (img.dataset.failed || /^blob:/.test(img.src || "")) return;
     img.dataset.failed = "1";
-    img.onerror = null;                                              // 鍙Е鍙戜竴娆★紝鏉滅粷寰幆
-    const row = img.closest("[data-message-key]");
-    if (row && row.dataset.messageKey) removeMessage(row.dataset.messageKey);  // 鍒犲け鏁堟秷鎭?+ 鏇存柊缂撳瓨
+    img.onerror = null;
+    const link = img.closest(".att-img-link");
+    if (link) link.classList.add("att-img-dead");
   }catch(_){}
 }
 function attUrl(u){
@@ -4935,11 +4935,12 @@ function renderAttachments(atts){
   return (atts || []).map((a) => {
     const up = a.uploading ? " att-uploading" : "";
     const fail = a.failed ? " att-failed" : "";
-    if (a.kind === "image"){
+    const isImg = a.kind === "image" || (a.mime && /^image\//.test(a.mime)) || /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(a.name || a.url || "");
+    if (isImg){
       const src = localPreview.get(a.url) || a.localUrl || attUrl(a.url);
       const href = attUrl(a.url) || a.localUrl || "";
       const ratio = Number(a.width) > 0 && Number(a.height) > 0 ? Math.max(0.35, Math.min(2.6, Number(a.width) / Number(a.height))) : 1.04;
-      return `<a class="att-img-link${up}${fail}" style="--att-ratio:${ratio.toFixed(4)}" href="${escapeHtml(href)}" target="_blank" rel="noopener"><img class="att-img" decoding="async" src="${escapeHtml(src)}" alt="${escapeHtml(a.name || "图片")}" loading="lazy"></a>`;
+      return `<a class="att-img-link${up}${fail}" style="--att-ratio:${ratio.toFixed(4)}" href="${escapeHtml(href)}" target="_blank" rel="noopener"><img class="att-img" decoding="async" src="${escapeHtml(src)}" alt="${escapeHtml(a.name || "图片")}" loading="lazy" onerror="attImgError(this)"></a>`;
     }
     return `<a class="att-file${up}${fail}" href="${escapeHtml(attUrl(a.url))}" target="_blank" rel="noopener" download="${escapeHtml(a.name || "file")}"><span class="att-file-ic">${fileIconSvg()}</span><span class="att-file-meta"><span class="att-file-name">${escapeHtml(a.name || "文件")}</span><span class="att-file-size">${fmtSize(a.size)}${a.uploading ? " · 上传中" : (a.failed ? " · 失败" : "")}</span></span></a>`;
   }).join("");
@@ -5374,7 +5375,7 @@ function estimatedHeight(row){
   const m = row.message;
   const atts = (m && m.meta && Array.isArray(m.meta.attachments)) ? m.meta.attachments : [];
   let h = (row.grouped ? 8 : 22) + 30;                        // 琛岄棿璺?+ 姘旀场绾靛悜 padding + meta 琛?
-  for (const a of atts) h += a.kind === "image" ? estImageHeight(a) : 56;
+  for (const a of atts){ const _isImg = a.kind === "image" || (a.mime && /^image\//.test(a.mime)) || /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(a.name || a.url || ""); h += _isImg ? estImageHeight(a) : 56; }
   h += estTextHeight(m && m.text);
   return Math.max(h, DEFAULT_ROW_HEIGHT);
 }
