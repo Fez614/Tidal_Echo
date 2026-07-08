@@ -4406,7 +4406,9 @@ function closeAllSheets(){
   }
 }
 
+let _currentModelId = "";
 function setModelUi(model){
+  _currentModelId = model || "";
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
   if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
@@ -4448,7 +4450,7 @@ function invalidateModelCaches(){
 }
 function refreshModelSheet(){
   invalidateModelCaches();
-  renderModelSheet(readModel() || "");
+  renderModelSheet(_currentModelId);
 }
 if (modelQuickButton){
   modelQuickButton.addEventListener("click", () => {
