@@ -2528,9 +2528,17 @@
     text-transform:none;
     letter-spacing:0;
   }
-  .model-vision{
-    font-size:10px;
-    opacity:.6;
+  .model-vision-tag{
+    display:inline-block;
+    font-size:9px;
+    font-weight:600;
+    letter-spacing:.03em;
+    padding:2px 6px;
+    border-radius:4px;
+    background:#E8F0FE;
+    color:#4A7FC1;
+    margin-left:6px;
+    vertical-align:middle;
   }
   .model-group-label{
     padding:10px 16px 4px;
@@ -2564,6 +2572,7 @@
   .model-sheet{ scrollbar-width:none; -ms-overflow-style:none; }
   .model-sheet::-webkit-scrollbar{ display:none; }
   .model-option{
+    position:relative;
     width:100%;
     border:0;
     border-bottom:1px solid rgba(43,38,30,.08);
@@ -2572,7 +2581,7 @@
     display:flex;
     align-items:center;
     gap:12px;
-    padding:16px 18px;
+    padding:16px 18px 16px 24px;
     text-align:left;
     font-family:inherit;
     cursor:pointer;
@@ -2611,26 +2620,20 @@
     font-weight:500;
     vertical-align:middle;
   }
-  .model-status{
-    flex:none;
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    font-size:12px;
-    font-weight:500;
-    padding:4px 10px;
-    border-radius:999px;
-    white-space:nowrap;
+  .model-status-bar{
+    position:absolute;
+    left:0;
+    top:50%;
+    transform:translateY(-50%);
+    width:3px;
+    height:60%;
+    border-radius:2px;
+    transition:background .2s;
   }
-  .model-status.checking{background:#F5F3EE;color:#9A958B;}
-  .model-status.available{background:#E8EFE2;color:#4D9A58;}
-  .model-status.unavailable{background:#F6E2E2;color:#C25555;}
-  .model-status.unknown{background:#F5F3EE;color:#9A958B;}
-  .model-status-dot{width:6px;height:6px;border-radius:50%;flex:none;}
-  .model-status.checking .model-status-dot{background:#B8B3A8;animation:pulse 1.2s ease infinite;}
-  .model-status.available .model-status-dot{background:#4D9A58;}
-  .model-status.unavailable .model-status-dot{background:#C25555;}
-  .model-status.unknown .model-status-dot{background:#B8B3A8;}
+  .model-status-bar.checking{background:#B8B3A8;animation:pulse 1.2s ease infinite;}
+  .model-status-bar.available{background:#4D9A58;}
+  .model-status-bar.unavailable{background:#C25555;}
+  .model-status-bar.unknown{background:#B8B3A8;}
   .model-check{
     flex:none;
     width:22px;
@@ -4421,10 +4424,10 @@ function renderModelSheet(activeModel){
       const stLabel = statusLabel(st);
       return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
         <span class="model-copy">
-          <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
-          <span class="model-desc">${escapeHtml(m.desc || "")}${m.vision ? ' <span class="model-vision">👁</span>' : ""}</span>
+          <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}${m.vision ? ' <span class="model-vision-tag">Vision</span>' : ""}</span>
+          <span class="model-desc">${escapeHtml(m.desc || "")}</span>
         </span>
-        <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
+        <span class="model-status-bar ${stClass}" data-status-for="${escapeHtml(m.value)}"></span>
         <span class="model-check" aria-hidden="true"></span>
       </button>`;
     }).join("");
@@ -4437,8 +4440,7 @@ function renderModelSheet(activeModel){
       checkModelStatus(m.value).then((status) => {
         const el = modelSheetList.querySelector(`[data-status-for="${CSS.escape(m.value)}"]`);
         if (el){
-          el.className = "model-status " + statusClass(status);
-          el.innerHTML = `<span class="model-status-dot"></span>${statusLabel(status)}`;
+          el.className = "model-status-bar " + statusClass(status);
         }
       });
     }
