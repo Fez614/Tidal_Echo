@@ -29,6 +29,7 @@ vLLM …)当「AI 大脑」。前端 PWA 和 relay 后端原样不动。
 
 from __future__ import annotations  # 让类型注解不在运行时求值,兼容 Python 3.7+
 
+import base64
 import collections
 import json
 import os
@@ -226,6 +227,32 @@ def relay_post_json(path: str, body: dict):
     with urllib.request.urlopen(req, timeout=30) as r:
         txt = r.read().decode("utf-8")
         return json.loads(txt) if txt else {}
+
+
+def _fetch_image_base64(url: str) -> str:
+    """Download image from relay and return as base64 data URI."""
+    try:
+        # Append auth token if not already present
+        if "?" in url:
+            full_url = url + f"&token={SECRET}"
+        else:
+            full_url = url + f"?token={SECRET}"
+        req = urllib.request.Request(full_url, headers=_auth())
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = r.read()
+            # Guess mime from URL or default to jpeg
+            mime = "image/jpeg"
+            if ".png" in url.lower():
+                mime = "image/png"
+            elif ".webp" in url.lower():
+                mime = "image/webp"
+            elif ".gif" in url.lower():
+                mime = "image/gif"
+            b64 = base64.b64encode(data).decode("ascii")
+            return f"data:{mime};base64,{b64}"
+    except Exception as e:
+        log("image", f"fetch failed: {e}")
+        return ""
 
 
 def send_reply(text: str, api_session: str = "") -> None:
@@ -478,13 +505,53 @@ def handle_human_message(msg: dict) -> None:
     content = (msg.get("content") or "").strip()
     atts = msg.get("attachments") or []
     api_session = msg.get("api_session") or ""
-    if atts:
-        names = ", ".join(a.get("name") or "file" for a in atts)
-        content = (content + "\n" if content else "") + f"(对方发来 {len(atts)} 个附件: {names})"
-    if not content:
-        return
-    log("in", f"#{msg.get('id')}: {content[:60]}")
-    convo.append({"role": "user", "content": content})
+
+    # Separate images from other attachments
+    images = []
+    non_image_atts = []
+    for a in atts:
+        kind = a.get("kind") or ""
+        mime = a.get("mime") or ""
+        url = a.get("url") or ""
+        name_lower = (a.get("name") or "").lower()
+        is_img = kind == "image" or mime.startswith("image/") or any(
+            ext in name_lower for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+        )
+        if is_img and url:
+            images.append(a)
+        else:
+            non_image_atts.append(a)
+
+    # Build message content (multimodal if images present)
+    if images:
+        parts = []
+        if content:
+            parts.append({"type": "text", "text": content})
+        for img in images:
+            url = img.get("url") or ""
+            if url and not url.startswith("http"):
+                url = RELAY_URL + url
+            b64 = _fetch_image_base64(url)
+            if b64:
+                parts.append({"type": "image_url", "image_url": {"url": b64}})
+            else:
+                parts.append({"type": "text", "text": f"[图片: {img.get('name') or 'image'} - 加载失败]"})
+        if non_image_atts:
+            names = ", ".join(a.get("name") or "file" for a in non_image_atts)
+            parts.append({"type": "text", "text": f"(还有 {len(non_image_atts)} 个其他附件: {names})"})
+        if not parts:
+            return
+        msg_content = parts if len(parts) > 1 else parts[0].get("text", "")
+    else:
+        if non_image_atts:
+            names = ", ".join(a.get("name") or "file" for a in non_image_atts)
+            content = (content + "\n" if content else "") + f"(对方发来 {len(non_image_atts)} 个附件: {names})"
+        if not content:
+            return
+        msg_content = content
+
+    log("in", f"#{msg.get('id')}: {str(msg_content)[:60]}")
+    convo.append({"role": "user", "content": msg_content})
     try:
         reply, actual_model = call_llm(build_messages())
     except Exception as e:
