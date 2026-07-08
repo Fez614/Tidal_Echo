@@ -278,7 +278,7 @@ def report_model(model_id: str, available: bool) -> None:
     _report_models()
 
 
-_HEARTBEAT_INTERVAL = 300  # seconds — re-report every 5 min to survive relay restarts
+_HEARTBEAT_INTERVAL = 60  # seconds — re-report every 1 min to survive relay restarts
 
 def _status_heartbeat() -> None:
     """Periodically re-report all model statuses so relay recovers after restart."""
