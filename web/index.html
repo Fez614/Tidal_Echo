@@ -2340,12 +2340,14 @@
   .bottom-sheet{
     width:min(100vw, 760px);
     max-height:min(78vh, 720px);
-    overflow:auto;
+    overflow-y:auto;
+    overflow-x:hidden;
     border-radius:42px 42px 0 0;
     background:#F8F5EF;
     padding:14px 30px calc(28px + env(safe-area-inset-bottom));
     transform:translateY(24px);
     transition:transform .24s cubic-bezier(.22,1,.36,1);
+    will-change:transform;
     box-shadow:0 -18px 48px rgba(0,0,0,.12);
   }
   .bottom-sheet-overlay.open .bottom-sheet{ transform:translateY(0); }
@@ -2599,32 +2601,52 @@
     background:radial-gradient(circle at center, #111 0 38%, transparent 41%);
   }
   @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
-  .model-sheet-head{ display:flex; align-items:center; gap:8px; padding:0 4px; }
-  .model-refresh{ background:none; border:1px solid var(--field-line); border-radius:8px; width:32px; height:32px; font-size:16px; cursor:pointer; color:var(--text-sub); display:grid; place-items:center; flex:none; }
-  .model-refresh:active{ background:var(--field-bg); }
-  .model-refresh.spin{ animation: modelSpin .6s linear; }
-  @keyframes modelSpin{ from{ transform:rotate(0) } to{ transform:rotate(360deg) } }
-  .model-sheet h2{
-    margin:0 0 14px;
-    font-size:18px;
-    font-weight:500;
-    color:#333;
+  .model-sheet-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:4px 0 12px;
+  }
+  .model-sheet-title{
+    font-size:17px;
+    font-weight:600;
+    color:var(--text-main, #111);
+    margin:0;
+    flex:1;
     text-align:center;
   }
-  .model-sheet .sheet-close{
-    top:6px;
-    left:6px;
-    transform:none;
-    width:40px;
-    height:40px;
-    font-size:22px;
+  .model-sheet-close{
+    border:0;
+    background:none;
+    width:44px;
+    height:44px;
+    font-size:26px;
     line-height:1;
+    color:var(--text-sub, #555);
+    cursor:pointer;
+    display:grid;
+    place-items:center;
     border-radius:50%;
-    z-index:2;
+    flex:none;
+    padding:0;
   }
-  .model-sheet .sheet-close:active{
-    background:rgba(0,0,0,.06);
+  .model-sheet-close:active{ background:rgba(0,0,0,.06); }
+  .model-refresh{
+    border:0;
+    background:none;
+    width:44px;
+    height:44px;
+    cursor:pointer;
+    color:var(--text-sub, #555);
+    display:grid;
+    place-items:center;
+    flex:none;
+    border-radius:50%;
+    padding:0;
   }
+  .model-refresh:active{ background:rgba(0,0,0,.06); }
+  .model-refresh.spin svg{ animation: modelSpin .6s linear; }
+  @keyframes modelSpin{ from{ transform:rotate(0) } to{ transform:rotate(360deg) } }
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:30px; padding-right:30px; border-radius:40px 40px 0 0; }
     .attach-grid{ gap:18px; margin-left:-4px; margin-right:-4px; }
@@ -3040,7 +3062,7 @@
   <button class="newmsg-pill" id="newMsgBtn" type="button" aria-label="new messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg><span>New</span></button>
   <div class="sheet-scrim hidden" id="sheetScrim" aria-hidden="true"></div>
   <section class="bottom-sheet hidden" id="attachSheet" aria-hidden="true"><div class="sheet-handle"></div><button class="sheet-close" type="button" data-sheet-close aria-label="close">&times;</button><h2>Add to chat</h2><div class="attach-grid"><button class="attach-card" type="button" data-attach-action="camera"><span class="attach-icon">+</span><span>Camera</span></button><button class="attach-card" type="button" data-attach-action="photos"><span class="attach-icon">+</span><span>Photos</span></button><button class="attach-card" type="button" data-attach-action="files"><span class="attach-icon">+</span><span>Files</span></button></div><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Web search</span></span><span class="sheet-switch" aria-hidden="true"></span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Add to project</span><span class="sheet-row-sub">None</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Tool access</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button></section>
-  <section class="bottom-sheet model-sheet hidden" id="modelSheet" aria-hidden="true"><div class="sheet-handle"></div><button class="sheet-close" type="button" data-sheet-close aria-label="close">&times;</button><div class="model-sheet-head"><h2>Select model</h2><button class="model-refresh" id="modelRefreshBtn" type="button" aria-label="refresh status">&#x21bb;</button></div><div class="model-sheet-list" id="modelSheetList"></div></section>
+  <section class="bottom-sheet model-sheet hidden" id="modelSheet" aria-hidden="true"><div class="sheet-handle"></div><div class="model-sheet-head"><button class="model-sheet-close" type="button" data-sheet-close aria-label="close">&times;</button><h2 class="model-sheet-title">Select model</h2><button class="model-refresh" id="modelRefreshBtn" type="button" aria-label="refresh status"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button></div><div class="model-sheet-list" id="modelSheetList"></div></section>
   <div class="terminal hidden" id="terminal"><div class="term-head"><span>same stream / current window</span><button id="termClose" aria-label="close">&times;</button></div><div class="term-body" id="termBody"></div></div>
   <div class="profile-panel hidden" id="profilePanel" aria-hidden="true"><div class="profile-card"><button class="profile-close" id="profileClose" type="button" aria-label="close">&times;</button><div class="profile-avatar" id="profileAvatarBtn"><div class="avatar-img" id="profileAvatarImg"></div></div><div class="profile-name-row"><h3 id="profileName">Claude</h3><input id="profileNameInput" class="hidden" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Claude"><button class="profile-name-edit" id="profileNameEdit" type="button" aria-label="edit">Edit</button></div><p class="profile-bio">&#38543;&#26102;&#22312;&#36825;&#37324;&#65292;&#38506;&#20320;&#32842;&#32842;&#12290;</p><input type="file" id="avatarInput" accept="image/*" class="hidden"></div></div>
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
@@ -4454,7 +4476,7 @@ function refreshModelSheet(){
 }
 if (modelQuickButton){
   modelQuickButton.addEventListener("click", () => {
-    refreshModelSheet();
+    renderModelSheet(_currentModelId);
     openSheet(modelSheet);
   });
 }
