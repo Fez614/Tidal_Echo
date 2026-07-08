@@ -2528,6 +2528,10 @@
     text-transform:none;
     letter-spacing:0;
   }
+  .model-vision{
+    font-size:10px;
+    opacity:.6;
+  }
   .model-group-label{
     padding:10px 16px 4px;
     font-size:11px;
@@ -4325,24 +4329,24 @@ function pushSystemErrorReply(text){
 
 /* ── Must stay in sync with KNOWN_MODELS in examples/bridge_any_llm.py ── */
 const MODEL_CHOICES = [
-  { value:"anthropic/claude-opus-4.8", label:"Opus 4.8", badge:"Latest", group:"Anthropic", desc:"最新旗舰，$5/$25" },
-  { value:"anthropic/claude-sonnet-4.6", label:"Sonnet 4.6", group:"Anthropic", desc:"最新 Sonnet，$3/$15" },
-  { value:"anthropic/claude-opus-4.6", label:"Opus 4.6", badge:"Pro", group:"Anthropic", desc:"深度对话专家，$5/$25" },
-  { value:"anthropic/claude-opus-4.5", label:"Opus 4.5", group:"Anthropic", desc:"上一代旗舰，$15/$75" },
-  { value:"anthropic/claude-haiku-4.5", label:"Haiku 4.5", group:"Anthropic", desc:"轻量快速，$0.80/$4" },
-  { value:"anthropic/claude-sonnet-4.5", label:"Sonnet 4.5", group:"Anthropic", desc:"上一代均衡之选，$3/$15" },
-  { value:"anthropic/claude-opus-4.1", label:"Opus 4.1", group:"Anthropic", desc:"经典版本，$15/$75" },
-  { value:"anthropic/claude-opus-4", label:"Opus 4", group:"Anthropic", desc:"初代 Opus，$15/$75" },
-  { value:"anthropic/claude-sonnet-4", label:"Sonnet 4", group:"Anthropic", desc:"性价比高，$3/$15" },
+  { value:"anthropic/claude-opus-4.8", label:"Opus 4.8", badge:"Latest", vision:true, group:"Anthropic", desc:"最新旗舰，$5/$25" },
+  { value:"anthropic/claude-sonnet-4.6", label:"Sonnet 4.6", vision:true, group:"Anthropic", desc:"最新 Sonnet，$3/$15" },
+  { value:"anthropic/claude-opus-4.6", label:"Opus 4.6", badge:"Pro", vision:true, group:"Anthropic", desc:"深度对话专家，$5/$25" },
+  { value:"anthropic/claude-opus-4.5", label:"Opus 4.5", vision:true, group:"Anthropic", desc:"上一代旗舰，$15/$75" },
+  { value:"anthropic/claude-haiku-4.5", label:"Haiku 4.5", vision:true, group:"Anthropic", desc:"轻量快速，$0.80/$4" },
+  { value:"anthropic/claude-sonnet-4.5", label:"Sonnet 4.5", vision:true, group:"Anthropic", desc:"上一代均衡之选，$3/$15" },
+  { value:"anthropic/claude-opus-4.1", label:"Opus 4.1", vision:true, group:"Anthropic", desc:"经典版本，$15/$75" },
+  { value:"anthropic/claude-opus-4", label:"Opus 4", vision:true, group:"Anthropic", desc:"初代 Opus，$15/$75" },
+  { value:"anthropic/claude-sonnet-4", label:"Sonnet 4", vision:true, group:"Anthropic", desc:"性价比高，$3/$15" },
   { value:"deepseek/deepseek-chat-v3-0324", label:"DeepSeek V3", group:"DeepSeek", desc:"快速日常对话，强推理能力" },
   { value:"deepseek/deepseek-r1", label:"DeepSeek R1", badge:"Thinking", group:"DeepSeek", desc:"深度推理，思维链模式" },
   { value:"qwen/qwen-2.5-72b-instruct", label:"Qwen 2.5 72B", group:"Alibaba", desc:"阿里通义千问，多语言强项" },
   { value:"nvidia/nemotron-3-ultra-550b-a55b:free", label:"Nemotron Free", group:"NVIDIA", desc:"免费模型，轻量快速" },
-  { value:"openai/gpt-4o", label:"GPT-4o", badge:"Pro", group:"OpenAI", desc:"多模态旗舰" },
-  { value:"openai/gpt-4o-mini", label:"GPT-4o Mini", group:"OpenAI", desc:"轻量快速版" },
-  { value:"google/gemini-2.5-pro", label:"Gemini 2.5 Pro", badge:"Pro", group:"Google", desc:"推理模型" },
-  { value:"google/gemini-2.5-flash", label:"Gemini 2.5 Flash", group:"Google", desc:"快速模型" },
-  { value:"meta-llama/llama-4-maverick", label:"Llama 4 Maverick", group:"Meta", desc:"最新开源模型" },
+  { value:"openai/gpt-4o", label:"GPT-4o", badge:"Pro", vision:true, group:"OpenAI", desc:"多模态旗舰" },
+  { value:"openai/gpt-4o-mini", label:"GPT-4o Mini", vision:true, group:"OpenAI", desc:"轻量快速版" },
+  { value:"google/gemini-2.5-pro", label:"Gemini 2.5 Pro", badge:"Pro", vision:true, group:"Google", desc:"推理模型" },
+  { value:"google/gemini-2.5-flash", label:"Gemini 2.5 Flash", vision:true, group:"Google", desc:"快速模型" },
+  { value:"meta-llama/llama-4-maverick", label:"Llama 4 Maverick", vision:true, group:"Meta", desc:"最新开源模型" },
   { value:"mistralai/mistral-large", label:"Mistral Large", group:"Mistral", desc:"最强模型" }
 ];
 const modelStatusCache = {};
@@ -4418,7 +4422,7 @@ function renderModelSheet(activeModel){
       return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
         <span class="model-copy">
           <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
-          <span class="model-desc">${escapeHtml(m.desc || "")}</span>
+          <span class="model-desc">${escapeHtml(m.desc || "")}${m.vision ? ' <span class="model-vision">👁</span>' : ""}</span>
         </span>
         <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
         <span class="model-check" aria-hidden="true"></span>
