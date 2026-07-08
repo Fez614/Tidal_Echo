@@ -3,12 +3,14 @@
    old shell (the precached index.html won't refresh until the SW reinstalls). */
 // ⚠️ SYNC: must match index.html CONFIG.AI_NAME — used only as push-title fallback
 const AI_NAME = "沈洛";
-const CACHE = "companion-v37-pricenote";
+const CACHE = "companion-v38-liminal";
 const PRECACHE = [
   "./index.html",
   "./chat-light.webp", "./chat-harbor.webp",
   "./menu-light.webp", "./menu-harbor.webp",
   "./avatar-sea.png",
+  "./favicon.jpg", "./apple-touch-icon.jpg",
+  "./icon-192.jpg", "./icon-512.jpg",
 ];
 
 self.addEventListener("message", (e) => {
