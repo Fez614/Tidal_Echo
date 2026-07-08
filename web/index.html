@@ -841,6 +841,29 @@
   .composer button:focus-visible{
     outline: none;
   }
+  /* Attachment staging area (thumbnails above input) */
+  .att-stage{
+    width:100%; display:flex; gap:8px; overflow-x:auto; padding:2px 0 4px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .att-stage::-webkit-scrollbar{ display:none; }
+  .att-stage:empty{ display:none; }
+  .att-stage-thumb{
+    position:relative; flex:none; width:64px; height:64px; border-radius:10px;
+    overflow:hidden; background:var(--field-bg); border:1px solid var(--field-line);
+  }
+  .att-stage-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .att-stage-thumb .att-stage-file{
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--text-faint); text-align:center; padding:4px;
+    word-break:break-all; line-height:1.2;
+  }
+  .att-stage-x{
+    position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%;
+    border:0; background:rgba(0,0,0,.55); color:#fff; font-size:13px; line-height:20px;
+    text-align:center; cursor:pointer; padding:0; display:grid; place-items:center;
+  }
+  .att-stage-x:active{ background:rgba(0,0,0,.8); }
   textarea{
     order: 2;
     flex:1 0 calc(100% - 132px); border:none; outline:none; resize:none; background:transparent;
@@ -3008,7 +3031,7 @@
     </div>
   </header>
   <main class="scroll" id="scroll"><div class="empty" id="empty"><div class="orb"></div><p>&#36825;&#37324;&#21482;&#26377;&#20320;&#21644;Claude&#12290;<br>&#35828;&#28857;&#20160;&#20040;&#21543;&#12290;</p></div></main>
-  <footer class="composer"><div class="field"><div class="model-quick" aria-label="model"><button class="model-pill" id="modelQuickButton" type="button" aria-label="select model">Sonnet 4.6 Thinking</button></div><button class="floatbtn clip-in-field" id="clipBtn" type="button" aria-label="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><input type="file" id="clipInput" multiple class="hidden" aria-hidden="true"><textarea id="input" rows="1" placeholder="Write a letter..." enterkeyhint="send"></textarea><button class="emojibtn" id="emojiBtn" aria-label="emoji" title="emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.2 4.2 0 0 0 7 0"/><line x1="9" y1="9.3" x2="9" y2="10"/><line x1="15" y1="9.3" x2="15" y2="10"/></svg></button><button class="floatbtn send" id="sendBtn" type="button" aria-label="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg></button></div></footer>
+  <footer class="composer"><div class="field"><div class="att-stage" id="attStage"></div><div class="model-quick" aria-label="model"><button class="model-pill" id="modelQuickButton" type="button" aria-label="select model">Sonnet 4.6 Thinking</button></div><button class="floatbtn clip-in-field" id="clipBtn" type="button" aria-label="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><input type="file" id="clipInput" multiple class="hidden" aria-hidden="true"><textarea id="input" rows="1" placeholder="Write a letter..." enterkeyhint="send"></textarea><button class="emojibtn" id="emojiBtn" aria-label="emoji" title="emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.3a4.2 4.2 0 0 0 7 0"/><line x1="9" y1="9.3" x2="9" y2="10"/><line x1="15" y1="9.3" x2="15" y2="10"/></svg></button><button class="floatbtn send" id="sendBtn" type="button" aria-label="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg></button></div></footer>
   <button class="newmsg-pill" id="newMsgBtn" type="button" aria-label="new messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg><span>New</span></button>
   <div class="sheet-scrim hidden" id="sheetScrim" aria-hidden="true"></div>
   <section class="bottom-sheet hidden" id="attachSheet" aria-hidden="true"><div class="sheet-handle"></div><button class="sheet-close" type="button" data-sheet-close aria-label="close">&times;</button><h2>Add to chat</h2><div class="attach-grid"><button class="attach-card" type="button" data-attach-action="camera"><span class="attach-icon">+</span><span>Camera</span></button><button class="attach-card" type="button" data-attach-action="photos"><span class="attach-icon">+</span><span>Photos</span></button><button class="attach-card" type="button" data-attach-action="files"><span class="attach-icon">+</span><span>Files</span></button></div><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Web search</span></span><span class="sheet-switch" aria-hidden="true"></span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Add to project</span><span class="sheet-row-sub">None</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button><button class="sheet-row" type="button" data-sheet-muted><span class="sheet-row-main"><span class="sheet-row-title">Tool access</span></span><span class="sheet-chevron" aria-hidden="true">&rsaquo;</span></button></section>
@@ -6380,29 +6403,47 @@ function triggerSendPress(){
 
 async function doSend(){
   const text = inputEl.value.trim();
-  if (!text) return;
-  triggerSendPress();            // 鍙戦€侀敭:杞绘寜鍥炲脊鐨勫皬鍙嶉
-  ensureAudio();                 // 鎵嬪娍鍐呰В閿?棰勭儹闊抽
+  const hasAtts = stagedAttachments.length > 0;
+  if (!text && !hasAtts) return;
+  triggerSendPress();
+  ensureAudio();
   inputEl.value = "";
   inputEl.style.height = "auto";
   sendBtn.classList.remove("hidden");
   if (micBtn) micBtn.classList.add("hidden");
 
+  // Upload staged attachments first
+  const finalAtts = [];
+  if (hasAtts){
+    for (const s of stagedAttachments){
+      try{
+        const up = await apiUpload(s.blob, s.name, s.mime);
+        if (s.localUrl && up && up.url) localPreview.set(up.url, s.localUrl);
+        finalAtts.push({ url: up.url, name: up.name, size: up.size, mime: up.mime, kind: up.kind, width: s.width || 0, height: s.height || 0 });
+      }catch(e){
+        if (String(e.message) === "413"){ showToast("\u6587\u4ef6\u592a\u5927\uff08\u4e0a\u9650 10MB\uff09"); return; }
+        showToast("\u9644\u4ef6\u4e0a\u4f20\u5931\u8d25"); return;
+      }
+    }
+  }
+  clearStagedAttachments();
+
   const optimisticTs = Date.now();
   const tempKey = "pending-" + (++optimisticSeq);
   const currentSid = effectiveApiSession();
   const optimisticMeta = currentSid ? { api_session: currentSid } : {};
+  if (finalAtts.length) optimisticMeta.attachments = finalAtts.map((a) => ({ ...a, localUrl: a.url }));
   const optimistic = { id: tempKey, ts: new Date(optimisticTs).toISOString(), from:"human", kind:"user", text, meta:optimisticMeta, status:"sending" };
   seen.add(tempKey);
   setMessage(optimistic, { render:false, cache:false });
-  freshKeys.add(tempKey);        // 鍏ュ満寮逛竴涓?
-  playSendSound();               // 鍙戝嚭鍙嶉闊?
+  freshKeys.add(tempKey);
+  playSendSound();
   rememberPendingOutgoing(tempKey, text, optimisticTs);
   scheduleRender({ stickToBottom:true });
   startReplyWait();
 
   try{
-    const { id } = await apiSend(text);
+    const { id } = await apiSend(text, finalAtts.length ? finalAtts : undefined);
     const key = msgKey(id);
     confirmOptimistic(tempKey, key);
     dropPendingOutgoing(tempKey);
@@ -6447,9 +6488,32 @@ function imageToJpeg(file){
     img.src = url;
   });
 }
-async function sendOneFile(file){
-  if (!secret) return;
-  ensureAudio();
+const attStage = $("#attStage");
+let stagedAttachments = [];  // { blob, name, mime, kind, localUrl, width, height }
+
+function renderAttStage(){
+  if (!attStage) return;
+  attStage.innerHTML = stagedAttachments.map((s, i) => {
+    const thumb = s.kind === "image"
+      ? `<img src="${s.localUrl}" alt="">`
+      : `<div class="att-stage-file">${escapeHtml(s.name)}</div>`;
+    return `<div class="att-stage-thumb">${thumb}<button class="att-stage-x" type="button" data-stage-rm="${i}" aria-label="remove">&times;</button></div>`;
+  }).join("");
+}
+if (attStage){
+  attStage.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-stage-rm]");
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.stageRm, 10);
+    if (stagedAttachments[idx] && stagedAttachments[idx].localUrl){
+      try{ URL.revokeObjectURL(stagedAttachments[idx].localUrl); }catch(_){}
+    }
+    stagedAttachments.splice(idx, 1);
+    renderAttStage();
+  });
+}
+
+async function stageFile(file){
   const image = isImageFile(file);
   let blob = file, name = file.name || (image ? "image" : "file"), mime = file.type || "";
   let imgW = 0, imgH = 0;
@@ -6459,44 +6523,21 @@ async function sendOneFile(file){
       if (conv){ blob = conv.blob; name = conv.name; mime = "image/jpeg"; imgW = conv.width || 0; imgH = conv.height || 0; }
     }catch(_){}
   }
-  if (blob.size > ATT_MAX){ showToast("鏂囦欢瓒呰繃 10MB锛屽彂涓嶄簡"); return; }
+  if (blob.size > ATT_MAX){ showToast("\u6587\u4ef6\u8d85\u8fc7 10MB\uff0c\u53d1\u4e0d\u4e86"); return; }
   const kind = image ? "image" : "file";
   const localUrl = image ? URL.createObjectURL(blob) : "";
-  const optimisticTs = Date.now();
-  const tempKey = "pending-" + (++optimisticSeq);
-  const att0 = { url: "", localUrl: localUrl, name: name, size: blob.size, mime: mime, kind: kind, width: imgW, height: imgH, uploading: true };
-  const currentSid = effectiveApiSession();
-  const optimisticMeta = { attachments: [att0] };
-  if (currentSid) optimisticMeta.api_session = currentSid;
-  const optimistic = { id: tempKey, ts: new Date(optimisticTs).toISOString(), from: "human", kind: "user", text: "", meta: optimisticMeta, status: "sending" };
-  seen.add(tempKey);
-  setMessage(optimistic, { render: false, cache: false });
-  freshKeys.add(tempKey);
-  playSendSound();
-  scheduleRender({ stickToBottom: true });
-  try{
-    const up = await apiUpload(blob, name, mime);
-    if (localUrl && up && up.url) localPreview.set(up.url, localUrl);
-    const finalAtt = { url: up.url, name: up.name, size: up.size, mime: up.mime, kind: up.kind, width: imgW, height: imgH };
-    rememberPendingOutgoing(tempKey, "", optimisticTs);
-    startReplyWait();
-    const { id } = await apiSend("", [finalAtt]);
-    const finalMeta = { attachments: [finalAtt] };
-    if (currentSid) finalMeta.api_session = currentSid;
-    confirmOptimistic(tempKey, msgKey(id), { id: id, ts: optimistic.ts, from: "human", kind: "user", text: "", meta: finalMeta, status: "sent" });
-    dropPendingOutgoing(tempKey);
-  }catch(err){
-    hideTyping();
-    dropPendingOutgoing(tempKey);
-    if (String(err.message) === "401") return;
-    if (String(err.message) === "413") showToast("文件太大（上限 10MB）");
-    setMessage({ ...optimistic, meta: { attachments: [{ ...att0, uploading: false, failed: true }] }, status: "failed" });
-    pushSystemErrorReply(systemErrorText(err, "File failed to send."));
-  }
+  stagedAttachments.push({ blob, name, mime, kind, localUrl, width: imgW, height: imgH });
+  renderAttStage();
 }
+
 async function handleFiles(list){
   const files = Array.from(list || []);
-  for (const f of files){ await sendOneFile(f); }
+  for (const f of files){ await stageFile(f); }
+}
+function clearStagedAttachments(){
+  stagedAttachments.forEach((s) => { if (s.localUrl) try{ URL.revokeObjectURL(s.localUrl); }catch(_){} });
+  stagedAttachments = [];
+  renderAttStage();
 }
 if (clipBtn && clipInput){
   clipBtn.addEventListener("click", () => openSheet(attachSheet));
