@@ -2504,8 +2504,7 @@
     background:#FFF;
     box-shadow:0 2px 5px rgba(0,0,0,.18);
   }
-  .model-list,
-  .model-group-header{
+  .model-list{
     font-size:11px;
     font-weight:600;
     text-transform:uppercase;
@@ -2513,7 +2512,33 @@
     color:var(--text-faint, #999);
     padding:12px 16px 4px;
   }
-  .model-group-header:first-child{ padding-top:4px; }
+  .model-group-card{
+    margin:8px 12px;
+    background:var(--bg-2);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .model-group-card:first-child{ margin-top:4px; }
+  .model-group-card + .model-group-card{ margin-top:12px; }
+  .model-group-label{
+    padding:10px 16px 4px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    color:var(--text-faint, #999);
+  }
+  .model-group-items{ display:flex; flex-direction:column; }
+  .model-group-card .model-option{
+    border-radius:0;
+    margin:0;
+  }
+  .model-group-card .model-option + .model-option{
+    border-top:1px solid var(--border);
+  }
+  .model-group-card .model-option:last-child{
+    border-radius:0 0 12px 12px;
+  }
   .model-sheet-list{
     display:flex;
     flex-direction:column;
@@ -4375,26 +4400,33 @@ function renderModelSheet(activeModel){
   if (!modelSheetList) return;
   const statusClass = (s) => s === "available" ? "available" : s === "unknown" ? "unknown" : s === "checking" ? "checking" : "unavailable";
   const statusLabel = (s) => s === "available" ? "Available" : s === "unknown" ? "\u2014" : s === "checking" ? "Checking\u2026" : "Unavailable";
-  let _lastGroup = null;
-  modelSheetList.innerHTML = MODEL_CHOICES.map((m) => {
-    let header = "";
-    if (m.group && m.group !== _lastGroup){
-      header = `<div class="model-group-header">${escapeHtml(m.group)}</div>`;
-      _lastGroup = m.group;
+  /* group models by provider */
+  const groups = [];
+  let _lg = null;
+  MODEL_CHOICES.forEach((m) => {
+    if (!m.group || m.group !== _lg){
+      groups.push({ name: m.group || "Other", models: [] });
+      _lg = m.group;
     }
-    const active = m.value === activeModel;
-    const cached = modelStatusCache[m.value];
-    const st = cached ? cached.status : "checking";
-    const stClass = statusClass(st);
-    const stLabel = statusLabel(st);
-    return header + `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
-      <span class="model-copy">
-        <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
-        <span class="model-desc">${escapeHtml(m.desc || "")}</span>
-      </span>
-      <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
-      <span class="model-check" aria-hidden="true"></span>
-    </button>`;
+    groups[groups.length - 1].models.push(m);
+  });
+  modelSheetList.innerHTML = groups.map((g) => {
+    const buttons = g.models.map((m) => {
+      const active = m.value === activeModel;
+      const cached = modelStatusCache[m.value];
+      const st = cached ? cached.status : "checking";
+      const stClass = statusClass(st);
+      const stLabel = statusLabel(st);
+      return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
+        <span class="model-copy">
+          <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}</span>
+          <span class="model-desc">${escapeHtml(m.desc || "")}</span>
+        </span>
+        <span class="model-status ${stClass}" data-status-for="${escapeHtml(m.value)}"><span class="model-status-dot"></span>${stLabel}</span>
+        <span class="model-check" aria-hidden="true"></span>
+      </button>`;
+    }).join("");
+    return `<div class="model-group-card"><div class="model-group-label">${escapeHtml(g.name)}</div><div class="model-group-items">${buttons}</div></div>`;
   }).join("");
   /* fire off async status checks for models not yet checked */
   MODEL_CHOICES.forEach((m) => {
