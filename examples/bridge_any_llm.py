@@ -157,13 +157,19 @@ FALLBACK_CODES = {401, 403, 404, 408, 409, 429, 500, 502, 503, 504}
 # 所有 PWA 模型选择面板里的模型 —— 启动时逐个 ping,上报真实可用性。
 # ── Must stay in sync with MODEL_CHOICES in web/index.html ──
 KNOWN_MODELS = [
+    "anthropic/claude-opus-4.8",
+    "anthropic/claude-sonnet-4.6",
+    "anthropic/claude-opus-4.6",
+    "anthropic/claude-opus-4.5",
+    "anthropic/claude-haiku-4.5",
+    "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-opus-4.1",
+    "anthropic/claude-opus-4",
+    "anthropic/claude-sonnet-4",
     "deepseek/deepseek-chat-v3-0324",
     "deepseek/deepseek-r1",
     "qwen/qwen-2.5-72b-instruct",
     "nvidia/nemotron-3-ultra-550b-a55b:free",
-    "anthropic/claude-opus-4.8",
-    "anthropic/claude-opus-4.6",
-    "anthropic/claude-sonnet-4",
     "openai/gpt-4o",
     "openai/gpt-4o-mini",
     "google/gemini-2.5-pro",
