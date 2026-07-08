@@ -6420,7 +6420,7 @@ async function doSend(){
       try{
         const up = await apiUpload(s.blob, s.name, s.mime);
         if (s.localUrl && up && up.url) localPreview.set(up.url, s.localUrl);
-        finalAtts.push({ url: up.url, name: up.name, size: up.size, mime: up.mime, kind: up.kind, width: s.width || 0, height: s.height || 0 });
+        finalAtts.push({ url: up.url, name: up.name, size: up.size, mime: up.mime, kind: up.kind, width: s.width || 0, height: s.height || 0, localUrl: s.localUrl || "" });
       }catch(e){
         if (String(e.message) === "413"){ showToast("\u6587\u4ef6\u592a\u5927\uff08\u4e0a\u9650 10MB\uff09"); return; }
         showToast("\u9644\u4ef6\u4e0a\u4f20\u5931\u8d25"); return;
@@ -6433,7 +6433,7 @@ async function doSend(){
   const tempKey = "pending-" + (++optimisticSeq);
   const currentSid = effectiveApiSession();
   const optimisticMeta = currentSid ? { api_session: currentSid } : {};
-  if (finalAtts.length) optimisticMeta.attachments = finalAtts.map((a) => ({ ...a, localUrl: a.url }));
+  if (finalAtts.length) optimisticMeta.attachments = finalAtts.map((a) => ({ ...a }));
   const optimistic = { id: tempKey, ts: new Date(optimisticTs).toISOString(), from:"human", kind:"user", text, meta:optimisticMeta, status:"sending" };
   seen.add(tempKey);
   setMessage(optimistic, { render:false, cache:false });
