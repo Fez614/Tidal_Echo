@@ -314,9 +314,36 @@ def report_model(model_id: str, available: bool) -> None:
 _HEARTBEAT_INTERVAL = 60  # seconds — re-report every 1 min to survive relay restarts
 
 def _status_heartbeat() -> None:
-    """Periodically re-report all model statuses so relay recovers after restart."""
+    """Periodically re-report all model statuses; re-probe unavailable ones."""
+    tick = 0
     while True:
         time.sleep(_HEARTBEAT_INTERVAL)
+        tick += 1
+        # Every 5 ticks (~5 min), re-probe models that were marked unavailable
+        if tick % 5 == 0 and MODEL_ROUTES:
+            route = MODEL_ROUTES[0]
+            base, key = route["base"], route["key"]
+            for mid, st in list(_model_status_reported.items()):
+                if st == "unavailable":
+                    try:
+                        body = json.dumps({
+                            "model": mid,
+                            "messages": [{"role": "user", "content": "hi"}],
+                            "max_tokens": 1,
+                        }, ensure_ascii=False).encode("utf-8")
+                        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+                        if "openrouter.ai" in base:
+                            headers["HTTP-Referer"] = OPENROUTER_REFERER
+                            headers["X-Title"] = OPENROUTER_TITLE
+                        req = urllib.request.Request(
+                            base + "/chat/completions", data=body, method="POST", headers=headers,
+                        )
+                        with urllib.request.urlopen(req, timeout=30) as _r:
+                            if _r.status == 200:
+                                report_model(mid, True)
+                                log("heartbeat", f"re-probe: {mid} now available")
+                    except Exception:
+                        pass  # still unavailable
         if _model_status_reported:
             try:
                 _report_models()
@@ -334,6 +361,7 @@ def _startup_model_probe() -> None:
     base, key = route["base"], route["key"]
     log("probe", f"开始探测 {len(KNOWN_MODELS)} 个模型可用性…")
     for mid in KNOWN_MODELS:
+        time.sleep(0.5)  # space out requests to avoid rate limiting
         try:
             body = json.dumps({
                 "model": mid,
@@ -347,7 +375,7 @@ def _startup_model_probe() -> None:
             req = urllib.request.Request(
                 base + "/chat/completions", data=body, method="POST", headers=headers,
             )
-            with urllib.request.urlopen(req, timeout=15) as _r:
+            with urllib.request.urlopen(req, timeout=30) as _r:
                 available = (_r.status == 200)
         except urllib.error.HTTPError as e:
             available = e.code not in FALLBACK_CODES

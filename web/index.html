@@ -5010,7 +5010,17 @@ function renderText(t){
 }
 function attImgError(img){
   try{
-    if (img.dataset.failed || /^blob:/.test(img.src || "")) return;
+    if (img.dataset.failed) return;
+    /* blob URL revoked? try server URL fallback */
+    if (/^blob:/.test(img.src || "")){
+      const link = img.closest(".att-img-link");
+      const href = link ? link.getAttribute("href") : "";
+      if (href && !/^blob:/.test(href)){
+        const serverSrc = href + (href.indexOf("?") >= 0 ? "&" : "?") + "token=" + encodeURIComponent(secret || "");
+        img.src = serverSrc;
+        return;
+      }
+    }
     img.dataset.failed = "1";
     img.onerror = null;
     const link = img.closest(".att-img-link");
@@ -6636,7 +6646,8 @@ async function handleFiles(list){
   for (const f of files){ await stageFile(f); }
 }
 function clearStagedAttachments(){
-  stagedAttachments.forEach((s) => { if (s.localUrl) try{ URL.revokeObjectURL(s.localUrl); }catch(_){} });
+  /* Don't revoke blob URLs here — they're still needed for optimistic image rendering.
+     They'll be cleaned up when the server echo confirms the message. */
   stagedAttachments = [];
   renderAttStage();
 }
