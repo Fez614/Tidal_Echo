@@ -2334,14 +2334,14 @@
     .sheet-row-title{ font-size:20px; }
     .sheet-row-sub{ font-size:15px; }
     .sheet-switch{
-      width:72px;
-      height:40px;
+      width:51px;
+      height:31px;
     }
     .sheet-switch::before{
-      width:32px;
-      height:32px;
-      right:4px;
-      top:4px;
+      width:27px;
+      height:27px;
+      right:2px;
+      top:2px;
     }
   }
   .bottom-sheet-overlay{
@@ -2372,7 +2372,10 @@
     transition:transform .24s cubic-bezier(.22,1,.36,1), visibility 0s .24s;
     visibility:hidden;
     box-shadow:0 -18px 48px rgba(0,0,0,.12);
+    scrollbar-width:none;
+    -ms-overflow-style:none;
   }
+  .bottom-sheet::-webkit-scrollbar{ display:none; }
   .bottom-sheet-overlay.open .bottom-sheet{ transform:translateY(0); visibility:visible; transition:transform .24s cubic-bezier(.22,1,.36,1), visibility 0s 0s; }
   .sheet-scrim{
     position:fixed;
@@ -2396,136 +2399,141 @@
   }
   .bottom-sheet.open{ transform:translate(-50%, 0); visibility:visible; transition:transform .24s cubic-bezier(.22,1,.36,1), visibility 0s 0s; }
   .sheet-grabber{
-    width:66px;
-    height:8px;
+    width:36px;
+    height:5px;
     border-radius:999px;
-    background:#E2E2E2;
-    margin:0 auto 38px;
+    background:#D1D1D1;
+    margin:0 auto 12px;
   }
   .sheet-head{
     position:relative;
     display:flex;
     align-items:center;
     justify-content:center;
-    min-height:42px;
-    margin-bottom:48px;
+    min-height:44px;
+    margin-bottom:8px;
   }
   .sheet-title{
-    font-size:clamp(30px, 8vw, 42px);
+    font-size:17px;
     line-height:1;
-    font-weight:400;
-    color:#111;
+    font-weight:600;
+    color:var(--v2-text-primary, #111);
   }
   .sheet-close{
     position:absolute;
     left:0;
     top:50%;
-    width:48px;
-    height:48px;
+    width:44px;
+    height:44px;
     transform:translateY(-50%);
     border:0;
     background:transparent;
-    color:#111;
+    color:var(--v2-text-tertiary, #555);
     display:grid;
     place-items:center;
     cursor:pointer;
+    border-radius:50%;
   }
-  .sheet-close svg{ width:32px; height:32px; }
+  .sheet-close:active{ background:rgba(0,0,0,.06); }
+  .sheet-close svg{ width:22px; height:22px; }
   .attach-grid{
     display:grid;
     grid-template-columns:repeat(3, 1fr);
-    gap:20px;
-    margin-bottom:34px;
+    gap:10px;
+    margin-bottom:12px;
   }
   .attach-card{
-    min-height:160px;
+    min-height:100px;
     border:0;
-    border-radius:24px;
+    border-radius:16px;
     background:#FDFDFD;
-    box-shadow:0 1px 10px rgba(0,0,0,.03);
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:24px;
-    color:#111;
+    gap:10px;
+    color:var(--v2-text-primary, #111);
     font-family:inherit;
-    font-size:clamp(21px, 5.8vw, 34px);
+    font-size:14px;
+    font-weight:500;
     cursor:pointer;
   }
+  .attach-card:active{ background:#F5F5F5; }
   .attach-icon{
-    width:84px;
-    height:84px;
+    width:48px;
+    height:48px;
     border-radius:50%;
     background:#EDEDED;
     display:grid;
     place-items:center;
   }
-  .attach-icon svg{ width:40px; height:40px; }
+  .attach-icon svg{ width:24px; height:24px; }
   .sheet-row{
     width:100%;
     border:0;
-    background:#FFF;
-    min-height:104px;
+    background:transparent;
+    min-height:56px;
     display:flex;
     align-items:center;
-    gap:26px;
-    padding:18px 30px;
-    color:#111;
+    gap:14px;
+    padding:12px 16px;
+    color:var(--v2-text-primary, #111);
     font-family:inherit;
     text-align:left;
     cursor:pointer;
-    border-radius:0;
-    box-shadow:0 1px 12px rgba(0,0,0,.025);
+    border-radius:12px;
+    box-shadow:none;
   }
-  .sheet-row + .sheet-row{ margin-top:22px; }
+  .sheet-row:active{ background:rgba(0,0,0,.04); }
+  .sheet-row + .sheet-row{ margin-top:2px; }
   .sheet-row-icon{
     flex:none;
-    width:72px;
-    height:72px;
+    width:40px;
+    height:40px;
     border-radius:50%;
     background:#EDEDED;
     display:grid;
     place-items:center;
   }
-  .sheet-row-icon svg{ width:36px; height:36px; }
+  .sheet-row-icon svg{ width:20px; height:20px; }
   .sheet-row-main{ flex:1; min-width:0; }
   .sheet-row-title{
     display:block;
-    font-size:clamp(26px, 6.8vw, 40px);
-    font-weight:400;
-    line-height:1.16;
+    font-size:16px;
+    font-weight:500;
+    line-height:1.3;
   }
   .sheet-row-sub{
     display:block;
-    margin-top:6px;
-    color:#888;
-    font-size:clamp(18px, 4.8vw, 30px);
+    margin-top:2px;
+    color:var(--v2-text-faint, #888);
+    font-size:13px;
     line-height:1.2;
   }
   .sheet-chevron{
     flex:none;
-    color:#999;
-    font-size:38px;
+    color:var(--v2-text-ghost, #999);
+    font-size:20px;
     line-height:1;
   }
   .sheet-switch{
     flex:none;
-    width:112px;
-    height:64px;
+    width:51px;
+    height:31px;
     border-radius:999px;
-    background:#2F75C9;
-    padding:5px;
+    background:#34C759;
+    padding:2px;
     display:flex;
     justify-content:flex-end;
   }
   .sheet-switch::before{
     content:"";
-    width:54px;
-    height:54px;
+    width:27px;
+    height:27px;
     border-radius:50%;
     background:#FFF;
-    box-shadow:0 2px 5px rgba(0,0,0,.18);
+    box-shadow:0 1px 3px rgba(0,0,0,.18);
   }
   .model-list{
     font-size:12px;
@@ -2719,14 +2727,14 @@
   @media (max-width: 420px){
     .bottom-sheet{ padding-left:12px; padding-right:12px; border-radius:28px 28px 0 0; }
     .attach-grid{ gap:18px; margin-left:-4px; margin-right:-4px; }
-    .attach-card{ min-height:148px; border-radius:22px; font-size:24px; gap:20px; }
-    .attach-icon{ width:70px; height:70px; }
-    .attach-icon svg{ width:34px; height:34px; }
-    .sheet-row{ min-height:94px; padding:14px 28px; gap:22px; }
-    .sheet-row-icon{ width:64px; height:64px; }
-    .sheet-row-icon svg{ width:31px; height:31px; }
-    .sheet-switch{ width:96px; height:54px; }
-    .sheet-switch::before{ width:44px; height:44px; }
+    .attach-card{ min-height:90px; border-radius:14px; font-size:13px; gap:8px; }
+    .attach-icon{ width:44px; height:44px; }
+    .attach-icon svg{ width:22px; height:22px; }
+    .sheet-row{ min-height:52px; padding:10px 14px; gap:12px; }
+    .sheet-row-icon{ width:38px; height:38px; }
+    .sheet-row-icon svg{ width:19px; height:19px; }
+    .sheet-switch{ width:51px; height:31px; }
+    .sheet-switch::before{ width:27px; height:27px; }
   }
   @media (max-width: 640px){
     .bottom-sheet{
@@ -2735,57 +2743,57 @@
       border-radius:28px 28px 0 0;
     }
     .sheet-grabber{
-      width:66px;
-      height:7px;
-      margin-bottom:28px;
+      width:36px;
+      height:5px;
+      margin-bottom:10px;
     }
     .sheet-head{
       min-height:44px;
-      margin-bottom:34px;
+      margin-bottom:6px;
     }
     .sheet-title{
       font-size:30px;
       line-height:1.05;
     }
     .sheet-close{
+      width:44px;
+      height:44px;
+    }
+    .sheet-close svg{
+      width:22px;
+      height:22px;
+    }
+    .attach-grid{
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .attach-card{
+      min-height:90px;
+      border-radius:14px;
+      font-size:13px;
+      gap:8px;
+    }
+    .attach-icon{
+      width:44px;
+      height:44px;
+    }
+    .attach-icon svg{
+      width:22px;
+      height:22px;
+    }
+    .sheet-row{
+      min-height:52px;
+      gap:12px;
+      padding:10px 14px;
+    }
+    .sheet-row + .sheet-row{ margin-top:2px; }
+    .sheet-row-icon{
       width:38px;
       height:38px;
     }
-    .sheet-close svg{
-      width:26px;
-      height:26px;
-    }
-    .attach-grid{
-      gap:14px;
-      margin-bottom:24px;
-    }
-    .attach-card{
-      min-height:120px;
-      border-radius:20px;
-      font-size:20px;
-      gap:14px;
-    }
-    .attach-icon{
-      width:58px;
-      height:58px;
-    }
-    .attach-icon svg{
-      width:28px;
-      height:28px;
-    }
-    .sheet-row{
-      min-height:72px;
-      gap:16px;
-      padding:12px 20px;
-    }
-    .sheet-row + .sheet-row{ margin-top:14px; }
-    .sheet-row-icon{
-      width:50px;
-      height:50px;
-    }
     .sheet-row-icon svg{
-      width:24px;
-      height:24px;
+      width:19px;
+      height:19px;
     }
     .sheet-row-title{
       font-size:21px;
@@ -2796,14 +2804,14 @@
       margin-top:3px;
     }
     .sheet-switch{
-      width:72px;
-      height:40px;
+      width:51px;
+      height:31px;
     }
     .sheet-switch::before{
-      width:32px;
-      height:32px;
-      right:4px;
-      top:4px;
+      width:27px;
+      height:27px;
+      right:2px;
+      top:2px;
     }
   }
 
