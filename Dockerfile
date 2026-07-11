@@ -10,5 +10,8 @@ COPY web/ web/
 COPY memory_bank/ memory_bank/
 
 ENV PYTHONUNBUFFERED=1
+ENV PORT=3011
+
+EXPOSE 3011
 
 CMD ["python", "backend/app.py"]
