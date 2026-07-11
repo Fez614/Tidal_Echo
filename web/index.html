@@ -2966,8 +2966,8 @@
   }
   .home-state-grid{
     display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:10px;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
     margin:0;
   }
   .home-state-grid div{
@@ -3138,7 +3138,7 @@
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
 </div>
 
-<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong>&#36731;&#24555;</strong><span>MOOD</span></div><div><strong>&#19987;&#27880;</strong><span>FOCUS</span></div><div><strong>&#20146;&#36817;</strong><span>BOND</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
+<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong id="desireAttach">0.40</strong><span>ATTACHMENT</span></div><div><strong id="desireStress">0.10</strong><span>STRESS</span></div><div><strong id="desireFatigue">0.00</strong><span>FATIGUE</span></div><div><strong id="desireLibido">0.20</strong><span>LIBIDO</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text" id="desireDesc">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
 
 <div class="call-overlay hidden" id="callOverlay" aria-hidden="true">
   <div class="call-mini" id="callMini">
@@ -3563,10 +3563,40 @@ function closeMemoryPanel(){
   setTimeout(() => memoryPanel.classList.add("hidden"), 260);
 }
 let menuCloseTimer = null;
+
+/* ── desire system: 4-dimension status card ── */
+const _desireEls = {
+  attach: null, stress: null, fatigue: null, libido: null, desc: null,
+};
+function _cacheDesireEls(){
+  if (_desireEls.attach) return;
+  _desireEls.attach = document.getElementById("desireAttach");
+  _desireEls.stress = document.getElementById("desireStress");
+  _desireEls.fatigue = document.getElementById("desireFatigue");
+  _desireEls.libido = document.getElementById("desireLibido");
+  _desireEls.desc = document.getElementById("desireDesc");
+}
+function updateDesireUI(d){
+  if (!d) return;
+  _cacheDesireEls();
+  if (_desireEls.attach) _desireEls.attach.textContent = (d.attachment ?? 0).toFixed(2);
+  if (_desireEls.stress) _desireEls.stress.textContent = (d.stress ?? 0).toFixed(2);
+  if (_desireEls.fatigue) _desireEls.fatigue.textContent = (d.fatigue ?? 0).toFixed(2);
+  if (_desireEls.libido) _desireEls.libido.textContent = (d.libido ?? 0).toFixed(2);
+  if (_desireEls.desc && d.description) _desireEls.desc.textContent = "状态：" + d.description;
+}
+async function fetchDesire(){
+  try{
+    const r = await fetch(`${API_BASE}/app/desire`, { headers: authHeaders() });
+    if (r.ok){ updateDesireUI(await r.json()); }
+  }catch(_){}
+}
+
 function openMenu(){
   if (!menuPanel) return;
   refreshDays();
   updateHomeMenu();
+  fetchDesire();
   clearTimeout(menuCloseTimer);
   menuPanel.classList.remove("hidden");
   requestAnimationFrame(() => requestAnimationFrame(() => menuPanel.classList.add("open")));
@@ -6133,6 +6163,10 @@ function onMessage(m){
   }
   if (m.type === "typing"){
     if (m.active) showTyping(); else hideTyping();
+    return;
+  }
+  if (m.type === "desire"){
+    updateDesireUI(m);
     return;
   }
   if (m.type === "context_command"){

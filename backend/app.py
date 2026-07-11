@@ -338,6 +338,7 @@ def notification_from_message(msg: dict) -> dict:
 plugin_subs: set[asyncio.Queue] = set()  # AI side    (GET /channel/in)
 app_subs: set[asyncio.Queue] = set()     # human side (GET /app/stream)
 stream_drafts: dict[tuple[str, str], dict] = {}
+desire_state: dict = {}  # latest desire state from bridge (4 dimensions)
 
 
 async def broadcast(subs: set, payload: dict) -> None:
@@ -1050,6 +1051,41 @@ async def set_model(request: Request):
     MODEL_FILE.parent.mkdir(parents=True, exist_ok=True)
     MODEL_FILE.write_text(json.dumps({"model": model}, ensure_ascii=False), encoding="utf-8")
     return {"model": model}
+
+
+# --- desire system (bridge pushes 4-dimension state, PWA reads it) ---
+
+@app.post("/channel/desire")
+async def set_desire(request: Request):
+    """Bridge pushes updated desire state after each conversation."""
+    check_auth(request)
+    body = await request.json()
+    global desire_state
+    desire_state = {
+        "attachment": float(body.get("attachment", 0)),
+        "stress": float(body.get("stress", 0)),
+        "fatigue": float(body.get("fatigue", 0)),
+        "libido": float(body.get("libido", 0)),
+        "description": str(body.get("description", "")),
+        "updated": body.get("updated") or now_iso(),
+    }
+    # Broadcast to connected PWA clients so status card updates live
+    await broadcast(app_subs, {"type": "desire", **desire_state})
+    return {"ok": True}
+
+
+@app.get("/app/desire")
+async def get_desire(request: Request):
+    """PWA reads current desire state for status card."""
+    check_auth(request)
+    if not desire_state:
+        return {
+            "attachment": 0.4, "stress": 0.1,
+            "fatigue": 0.0, "libido": 0.2,
+            "description": "安静地在这里",
+            "updated": now_iso(),
+        }
+    return desire_state
 
 
 

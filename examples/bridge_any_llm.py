@@ -38,6 +38,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -79,6 +80,7 @@ for _pk in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"):
 
 # memory.py reads config from os.environ at import time — must be imported AFTER .env loading
 import memory
+import desire
 
 # 日志级别: debug / info(默认) / warn / error
 _LOG_LEVELS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
@@ -188,6 +190,9 @@ CURSOR_FILE = STATE_DIR / "last_in_id"
 # 而非「最近」N 条)。收到的人类消息和自己发的回复都 append 进来,喂模型时取尾部。
 convo: "collections.deque[dict]" = collections.deque(maxlen=max(HISTORY_N * 2, 8))
 
+# 欲望系统：沈洛的四维内在驱动状态（在 main() 中初始化）
+desire_state = desire.DesireState()
+
 
 _TAG_LEVEL = {
     "fatal": 3, "err": 3, "error": 3,
@@ -273,6 +278,21 @@ def send_reply(text: str, api_session: str = "") -> None:
         payload["api_session"] = api_session
     out = relay_post_json("/channel/out", payload)
     log("out", f"replied (id={out.get('id')})")
+
+
+def push_desire() -> None:
+    """Push desire state to relay so PWA status card can read it."""
+    try:
+        relay_post_json("/channel/desire", {
+            "attachment": round(desire_state.attachment, 3),
+            "stress": round(desire_state.stress, 3),
+            "fatigue": round(desire_state.fatigue, 3),
+            "libido": round(desire_state.libido, 3),
+            "description": desire_state.prompt_description(),
+            "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        })
+    except Exception as e:
+        log("desire", f"push to relay failed: {e}")
 
 
 def send_generation_error(err: Exception) -> None:
@@ -650,6 +670,16 @@ def _process_flushed_messages(msgs: list) -> None:
     if mem_ctx:
         sys_parts.append(mem_ctx)
         log("memory", f"context injected: {len(mem_ctx)} chars")
+    # ── 注入当前时间,让模型知道现在几点 ──
+    _tz = timezone(timedelta(hours=8))
+    _now = datetime.now(_tz)
+    _weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+    sys_parts.append(f"[当前时间: {_now.strftime('%Y年%m月%d日')} {_weekdays[_now.weekday()]} {_now.strftime('%H:%M')}]")
+    # ── 注入沈洛此刻的内在状态（欲望系统）──
+    desire_state.apply_decay()
+    _desire_desc = desire_state.prompt_description()
+    sys_parts.append(f"[沈洛此刻的状态]\n{_desire_desc}")
+    log("desire", f"{desire_state.summary()} → {_desire_desc}")
     sys_content = "\n\n".join(p for p in sys_parts if p.strip())
 
     # Build messages: system + full conversation history (including assistant replies)
@@ -753,6 +783,12 @@ def _process_flushed_messages(msgs: list) -> None:
         api_session = msgs[-1].get("api_session") or ""
         send_reply(reply, api_session=api_session)
 
+        # ── 欲望系统：对话后更新状态 ──
+        desire_state.update_from_conversation(last_text_content, reply)
+        desire_state.save()
+        push_desire()
+        log("desire", f"updated → {desire_state.summary()}")
+
         # Async memory extraction (non-blocking)
         def _extract_and_store():
             try:
@@ -831,11 +867,82 @@ def stream_inbound(cursor: int) -> None:
 
 def main() -> None:
     _require_config()
+    # ── 进程锁:确保同一时刻只有一个 bridge 在跑(单身体原则) ──
+    # 策略:发现旧进程就杀掉接管,而不是自己退出。
+    # 额外扫一遍同名进程,防止 Windows 下孤儿累积。
+    _pid_file = STATE_DIR / "bridge.pid"
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        my_pid = os.getpid()
+
+        def _kill_pid(pid: int, label: str) -> None:
+            if pid == my_pid:
+                return
+            log("boot", f"killing old bridge {label} (PID {pid})")
+            try:
+                if sys.platform == "win32":
+                    import subprocess as _sp
+                    r = _sp.run(f"taskkill /F /PID {pid}", shell=True,
+                                capture_output=True, timeout=5)
+                    if r.returncode != 0:
+                        log("boot", f"taskkill PID {pid} rc={r.returncode}")
+                else:
+                    os.kill(pid, 15)  # SIGTERM
+            except Exception as e:
+                log("boot", f"kill PID {pid} failed: {e}")
+
+        # 1) Kill the PID recorded in the lock file
+        if _pid_file.exists():
+            try:
+                old_pid = int(_pid_file.read_text().strip())
+                _kill_pid(old_pid, "from lockfile")
+            except (ValueError, OSError):
+                pass
+
+        # 2) Sweep: kill any OTHER bridge_any_llm.py processes (Windows orphan guard)
+        if sys.platform == "win32":
+            try:
+                import subprocess as _sp
+                ps_cmd = (
+                    "Get-CimInstance Win32_Process -Filter \"name='python.exe'\" "
+                    "| Where-Object { $_.CommandLine -like '*bridge_any_llm*' } "
+                    "| Select-Object -ExpandProperty ProcessId"
+                )
+                r = _sp.run(
+                    ["powershell.exe", "-Command", ps_cmd],
+                    capture_output=True, text=True, timeout=15,
+                )
+                for line in r.stdout.strip().splitlines():
+                    line = line.strip()
+                    if line.isdigit():
+                        _kill_pid(int(line), "from sweep")
+            except Exception as e:
+                log("boot", f"orphan sweep failed: {e}")
+
+        # Brief pause to let killed processes release resources
+        time.sleep(0.5)
+        _pid_file.write_text(str(my_pid))
+        import atexit
+        atexit.register(lambda: _pid_file.unlink(missing_ok=True))
+    except Exception as e:
+        log("boot", f"PID lock check failed: {e}")
     log("boot", f"relay={RELAY_URL}  models={[r['model'] for r in MODEL_ROUTES]}  history={HISTORY_N}")
 
     # Initialize Ombre Brain memory system
     mem_ok = memory.init(log)
     log("boot", f"memory: {'OB connected' if mem_ok else 'OB unavailable'}")
+
+    # Initialize desire system (load persisted state or start fresh)
+    if desire_state.load():
+        desire_state.apply_decay()  # account for time elapsed since last save
+        log("boot", f"desire: loaded → {desire_state.summary()}")
+    else:
+        log("boot", "desire: fresh start (no saved state)")
+    # Push initial state to relay so PWA status card has data
+    try:
+        push_desire()
+    except Exception as e:
+        log("boot", f"desire push failed: {e}")
 
     cursor = read_cursor()
     # Skip warm-start history loading — relay DB contains polluted messages
