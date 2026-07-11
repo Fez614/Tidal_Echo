@@ -77,6 +77,9 @@ for _pk in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"):
         if _variant in _env_merged:
             os.environ[_variant] = _env_merged[_variant]
 
+# memory.py reads config from os.environ at import time — must be imported AFTER .env loading
+import memory
+
 # 日志级别: debug / info(默认) / warn / error
 _LOG_LEVELS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
 LOG_LEVEL = _LOG_LEVELS.get(os.environ.get("LOG_LEVEL", "info").lower(), 1)
@@ -135,9 +138,8 @@ def system_prompt() -> str:
     parts = [PERSONA]
     if RELATIONSHIP_SUMMARY:
         parts.append(RELATIONSHIP_SUMMARY)
-    mem = memory_context()
-    if mem:
-        parts.append(mem)
+    # Memory context is now retrieved dynamically in _process_flushed_messages
+    # via memory.retrieve_context() instead of static memory_context()
     return "\n\n".join(part for part in parts if part.strip())
 
 # 模型链:主模型 + 可选兜底(LLM_*_2 / _3)。任一返回 FALLBACK_CODES 就顺次切下一个。
@@ -437,12 +439,81 @@ def build_messages() -> list:
 # 调模型(OpenAI chat/completions;带 fallback 链)
 # ---------------------------------------------------------------------------
 
+def _one_call_with_tools(route: dict, messages: list, tools: list = None) -> str:
+    """Like _one_call but supports function calling with a tool_calls loop."""
+    body_dict = {
+        "model": route["model"],
+        "messages": messages,
+        "temperature": TEMPERATURE,
+    }
+    if tools:
+        body_dict["tools"] = tools
+
+    max_tool_rounds = 8
+    for _ in range(max_tool_rounds):
+        body = json.dumps(body_dict, ensure_ascii=False).encode("utf-8")
+        headers = {"Authorization": f"Bearer {route['key']}", "Content-Type": "application/json"}
+        if "openrouter.ai" in route["base"]:
+            headers["HTTP-Referer"] = OPENROUTER_REFERER
+            headers["X-Title"] = OPENROUTER_TITLE
+
+        req = urllib.request.Request(
+            route["base"] + "/chat/completions", data=body, method="POST",
+            headers=headers,
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as r:
+                data = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", "replace")[:500]
+            log("err", f"_one_call_with_tools HTTP {e.code}: {err_body}")
+            raise
+
+        choice = data["choices"][0]
+        message = choice.get("message", {})
+        tool_calls = message.get("tool_calls")
+
+        if tool_calls:
+            # Add assistant message with tool calls to messages
+            assistant_msg = {"role": "assistant", "tool_calls": tool_calls}
+            if message.get("content"):
+                assistant_msg["content"] = message["content"]
+            body_dict["messages"] = list(body_dict["messages"]) + [assistant_msg]
+
+            # Execute each tool call
+            for tc in tool_calls:
+                fn_name = tc.get("function", {}).get("name", "")
+                fn_args_str = tc.get("function", {}).get("arguments", "{}")
+                try:
+                    fn_args = json.loads(fn_args_str) if isinstance(fn_args_str, str) else fn_args_str
+                except json.JSONDecodeError:
+                    fn_args = {}
+
+                log("tool", f"call: {fn_name}({json.dumps(fn_args, ensure_ascii=False)[:80]})")
+                result = memory.handle_tool_call(fn_name, fn_args)
+                log("tool", f"result: {result[:80]}")
+
+                body_dict["messages"].append({
+                    "role": "tool",
+                    "tool_call_id": tc.get("id", ""),
+                    "content": result,
+                })
+            continue  # Loop back to get model's response after tool results
+
+        # No tool calls — return text
+        text = (message.get("content") or "").strip()
+        return text
+
+    # Max tool rounds exceeded
+    log("tool", "max tool call rounds reached")
+    return (message.get("content") or "").strip()
+
+
 def _one_call(route: dict, messages: list) -> str:
     body = json.dumps({
         "model": route["model"],
         "messages": messages,
         "temperature": TEMPERATURE,
-        # 想接 function calling:在这里加 "tools": [...],处理返回里的 tool_calls,循环喂回(上限 ~8 步)。
     }, ensure_ascii=False).encode("utf-8")
     headers = {"Authorization": f"Bearer {route['key']}", "Content-Type": "application/json"}
     if "openrouter.ai" in route["base"]:
@@ -453,22 +524,40 @@ def _one_call(route: dict, messages: list) -> str:
         route["base"] + "/chat/completions", data=body, method="POST",
         headers=headers,
     )
-    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as r:
-        data = json.loads(r.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8", "replace")[:500]
+        log("err", f"_one_call HTTP {e.code}: {err_body}")
+        raise
     return (data["choices"][0]["message"]["content"] or "").strip()
 
 
-def call_llm(messages: list) -> tuple:
+def call_llm(messages: list, tools: list = None) -> tuple:
     """Returns (reply_text, actual_model_id). actual_model_id may differ from
     the configured model when fallback kicks in (e.g. region block)."""
     last_err = None
     for route in active_model_routes():
         log("model", route.get("model", ""))
         try:
-            text = _one_call(route, messages)
+            if tools:
+                text = _one_call_with_tools(route, messages, tools)
+            else:
+                text = _one_call(route, messages)
             report_model(route["model"], True)
             return text, route["model"]
         except urllib.error.HTTPError as e:
+            # 400 with tools → model doesn't support function calling, retry without
+            if e.code == 400 and tools:
+                log("tool", f"{route['model']} 不支持 tools，降级为普通调用")
+                try:
+                    text = _one_call(route, messages)
+                    report_model(route["model"], True)
+                    return text, route["model"]
+                except Exception as retry_err:
+                    last_err = retry_err
+                    log("llm", f"降级调用也失败: {retry_err}")
             last_err = e
             if e.code in FALLBACK_CODES:
                 report_model(route["model"], False)
@@ -532,36 +621,85 @@ def active_model_routes() -> list:
 
 
 # ---------------------------------------------------------------------------
-# 一条消息的处理
+# 消息缓冲 + 一条消息的处理
 # ---------------------------------------------------------------------------
 
+_pending_msgs: list = []  # kept for compat, unused
+
+
 def handle_human_message(msg: dict) -> None:
-    content = (msg.get("content") or "").strip()
-    atts = msg.get("attachments") or []
-    api_session = msg.get("api_session") or ""
+    """Entry point for each SSE message. Process immediately — no buffering."""
+    _process_flushed_messages([msg])
 
-    # Separate images from other attachments
-    images = []
-    non_image_atts = []
-    for a in atts:
-        kind = a.get("kind") or ""
-        mime = a.get("mime") or ""
-        url = a.get("url") or ""
-        name_lower = (a.get("name") or "").lower()
-        is_img = kind == "image" or mime.startswith("image/") or any(
-            ext in name_lower for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-        )
-        if is_img and url:
-            images.append(a)
-        else:
-            non_image_atts.append(a)
 
-    # Build message content (multimodal if images present)
-    if images:
-        parts = []
+def _process_flushed_messages(msgs: list) -> None:
+    """Process a batch of flushed messages: retrieve memory → build context → call LLM → reply → extract."""
+    # Get the latest message's text for memory retrieval
+    latest_text = ""
+    for m in reversed(msgs):
+        c = m.get("content") or ""
+        if isinstance(c, str) and c.strip():
+            latest_text = c
+            break
+
+    # Build system prompt with dynamic memory context
+    sys_parts = [PERSONA]
+    if RELATIONSHIP_SUMMARY:
+        sys_parts.append(RELATIONSHIP_SUMMARY)
+    mem_ctx = memory.retrieve_context(latest_text)
+    if mem_ctx:
+        sys_parts.append(mem_ctx)
+        log("memory", f"context injected: {len(mem_ctx)} chars")
+    sys_content = "\n\n".join(p for p in sys_parts if p.strip())
+
+    # Build messages: system + full conversation history (including assistant replies)
+    # + current user message appended below.
+    convo_list = list(convo)
+    messages = [{"role": "system", "content": sys_content}] + convo_list
+
+    # Merge all buffered text messages into a SINGLE user message.
+    # Sending them as separate user turns confuses the model — it picks one
+    # to reply to and ignores the rest, causing reply-message mismatch.
+    combined_texts: list = []
+    all_images: list = []
+    all_non_image_atts: list = []
+    last_text_content = ""
+    atts_for_extract = []
+
+    for msg in msgs:
+        content = (msg.get("content") or "").strip()
+        atts = msg.get("attachments") or []
+        for a in atts:
+            kind = a.get("kind") or ""
+            mime = a.get("mime") or ""
+            name_lower = (a.get("name") or "").lower()
+            is_img = kind == "image" or mime.startswith("image/") or any(
+                ext in name_lower for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+            )
+            if is_img and a.get("url"):
+                all_images.append(a)
+            else:
+                all_non_image_atts.append(a)
         if content:
-            parts.append({"type": "text", "text": content})
-        for img in images:
+            combined_texts.append(content)
+            last_text_content = content
+            atts_for_extract = atts
+            log("in", f"#{msg.get('id')}: {content[:60]}")
+
+    if not last_text_content and not all_images:
+        return
+
+    # Build one merged user message
+    merged_text = "\n".join(combined_texts) if combined_texts else ""
+    if all_non_image_atts:
+        names = ", ".join(a.get("name") or "file" for a in all_non_image_atts)
+        merged_text = (merged_text + "\n" if merged_text else "") + f"(对方发来 {len(all_non_image_atts)} 个附件: {names})"
+
+    if all_images:
+        parts = []
+        if merged_text:
+            parts.append({"type": "text", "text": merged_text})
+        for img in all_images:
             url = img.get("url") or ""
             if url and not url.startswith("http"):
                 url = RELAY_URL + url
@@ -570,37 +708,68 @@ def handle_human_message(msg: dict) -> None:
                 parts.append({"type": "image_url", "image_url": {"url": b64}})
             else:
                 parts.append({"type": "text", "text": f"[图片: {img.get('name') or 'image'} - 加载失败]"})
-        if non_image_atts:
-            names = ", ".join(a.get("name") or "file" for a in non_image_atts)
-            parts.append({"type": "text", "text": f"(还有 {len(non_image_atts)} 个其他附件: {names})"})
-        if not parts:
-            return
         msg_content = parts if len(parts) > 1 else parts[0].get("text", "")
     else:
-        if non_image_atts:
-            names = ", ".join(a.get("name") or "file" for a in non_image_atts)
-            content = (content + "\n" if content else "") + f"(对方发来 {len(non_image_atts)} 个附件: {names})"
-        if not content:
-            return
-        msg_content = content
+        msg_content = merged_text
 
-    log("in", f"#{msg.get('id')}: {str(msg_content)[:60]}")
     convo.append({"role": "user", "content": msg_content})
+    messages.append({"role": "user", "content": msg_content})  # must be in messages sent to LLM
+
+    if not last_text_content:
+        return
+
+    # Only enable memory management tools when the user explicitly asks for
+    # memory operations (keyword-gated). Prevents the model from calling
+    # delete/update/pin on normal conversation messages.
+    _MEM_TRIGGER = (
+        "忘掉", "别记", "删掉", "删除", "取消记忆", "不要记",
+        "记错", "改记忆", "应该是", "纠正",
+        "永远记住", "别忘了", "钉住", "一定要记住", "记住这个",
+        "forget", "delete memory", "unlearn",
+    )
+    tools = None
+    if memory.OB_ENABLED and any(kw in last_text_content for kw in _MEM_TRIGGER):
+        tools = memory.MEMORY_TOOLS
+        log("tool", f"memory tools enabled (matched keyword in: {last_text_content[:40]})")
+    # Debug: log messages sent to model
+    for i, m in enumerate(messages):
+        c = m.get("content", "")
+        text_preview = c[:100] if isinstance(c, str) else str(c)[:100]
+        log("debug", f"msg[{i}] role={m['role']}: {text_preview}")
     try:
-        reply, actual_model = call_llm(build_messages())
+        reply, actual_model = call_llm(messages, tools=tools)
     except Exception as e:
         log("err", f"生成失败: {e}")
         send_generation_error(e)
         return
+
     if reply:
-        # If fallback was used, append a subtle note so the user knows
         configured = active_model_routes()[0]["model"] if active_model_routes() else ""
         if actual_model and actual_model != configured:
             short_actual = actual_model.split("/")[-1] if "/" in actual_model else actual_model
             short_configured = configured.split("/")[-1] if "/" in configured else configured
             reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
         convo.append({"role": "assistant", "content": reply})
+        api_session = msgs[-1].get("api_session") or ""
         send_reply(reply, api_session=api_session)
+
+        # Async memory extraction (non-blocking)
+        def _extract_and_store():
+            try:
+                # Build context from recent conversation for extraction
+                recent = "\n".join(
+                    f"{'对方' if m['role']=='user' else 'AI'}: {m['content'][:200]}"
+                    for m in list(convo)[-6:]
+                    if isinstance(m.get("content"), str)
+                )
+                extraction = memory.extract_memorable(last_text_content, recent)
+                if extraction:
+                    memory.store_memory(extraction)
+            except Exception as e:
+                log("memory", f"async extraction failed: {e}")
+
+        threading.Thread(target=_extract_and_store, daemon=True, name="mem-extract").start()
+
 
 
 # ---------------------------------------------------------------------------
@@ -663,17 +832,25 @@ def stream_inbound(cursor: int) -> None:
 def main() -> None:
     _require_config()
     log("boot", f"relay={RELAY_URL}  models={[r['model'] for r in MODEL_ROUTES]}  history={HISTORY_N}")
+
+    # Initialize Ombre Brain memory system
+    mem_ok = memory.init(log)
+    log("boot", f"memory: {'OB connected' if mem_ok else 'OB unavailable'}")
+
     cursor = read_cursor()
-    # 暖启动:拉历史填上下文,并把全新部署的游标设到「当前最新」——不回放/重答旧消息。
-    try:
-        ctx, max_id = load_history()
-        convo.extend(ctx)
-        if cursor == 0:
+    # Skip warm-start history loading — relay DB contains polluted messages
+    # from previous buggy bridge sessions. Start with empty convo deque.
+    # Still need to advance cursor to latest so we don't replay old messages.
+    if cursor == 0:
+        try:
+            _, max_id = load_history()
             cursor = max_id
             write_cursor(cursor)
-        log("boot", f"warm-start: {len(convo)} msgs in context, cursor={cursor}")
-    except Exception as e:
-        log("boot", f"history warm-start skipped ({e})")
+            log("boot", f"first run: cursor set to {cursor}, no history loaded")
+        except Exception as e:
+            log("boot", f"first run cursor init skipped ({e})")
+    else:
+        log("boot", f"clean start: cursor={cursor}, no history loaded")
     # 后台线程:启动时探测所有模型可用性并上报,不阻塞主循环
     threading.Thread(target=_startup_model_probe, daemon=True, name="model-probe").start()
     threading.Thread(target=_status_heartbeat, daemon=True, name="status-heartbeat").start()

@@ -902,39 +902,37 @@
   .newmsg-pill svg{ width: 15px; height: 15px; flex: none; }
   @media (prefers-reduced-motion: reduce){ .newmsg-pill{ transition: opacity .2s ease; } }
 
-  /* 鈹€鈹€ Login 鈹€鈹€ */
+  /* ── Login ── */
   .login{
     position: fixed; inset:0; z-index: 50;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap: 22px; padding: 28px;
     padding-top: calc(28px + env(safe-area-inset-top));
     background-color: var(--bg);
-    background-image: var(--wall-default);
-    background-size: cover;
-    background-position: center;
   }
   .login .orb{
     width:72px; height:72px; border-radius:50%;
-    background-image: var(--avatar-default);
+    background-image: url("avatar-login.jpg");
     background-size: cover;
-    box-shadow: 0 20px 42px rgba(24,46,67,0.2);
+    box-shadow: 0 20px 42px rgba(24,46,67,0.12);
     animation: breathe 4.5s ease-in-out infinite;
   }
-  .login h1{ margin:0; font-size:34px; font-weight:500; letter-spacing:0; }
-  .login .sub{ margin:-12px 0 0; color: var(--text-soft); font-size:16px; text-align:center; }
-  .login form{ display:flex; flex-direction:column; gap:11px; width:100%; max-width:320px; }
+  .login h1{ margin:0; font-family: var(--font-cn); font-size:28px; font-weight:500; letter-spacing:0.02em; color: var(--text); }
+  .login .sub{ margin:-10px 0 0; color: var(--text-faint); font-size:14px; text-align:center; }
+  .login form{ display:flex; flex-direction:column; gap:11px; width:100%; max-width:300px; }
   .login input{
-    width:100%; padding: 14px 16px; font: inherit; color: var(--text);
+    width:100%; padding: 14px 16px; font: inherit; font-size:15px; color: var(--text);
     background: var(--field-bg); border:1px solid var(--field-line); border-radius:18px; outline:none;
     transition: border-color .2s ease;
     box-shadow: var(--soft-shadow);
   }
   .login input:focus{ border-color: var(--accent); }
   .login button{
-    width:100%; padding: 14px; font: inherit; font-weight:600;
+    width:100%; padding: 14px; font: inherit; font-weight:500; font-size:15px;
     background: var(--accent); color: var(--accent-fg); border:none; border-radius:18px; cursor:pointer;
+    transition: opacity .15s ease;
   }
-  .login button:active{ transform: scale(.99); }
+  .login button:active{ opacity:.85; }
   .login .err{ color:#c0533f; font-size:13px; min-height:16px; text-align:center; margin:0; }
   .hidden{ display:none !important; }
   .app.kb .composer{ padding-bottom: 8px; }
@@ -3105,14 +3103,14 @@
 </head>
 <body>
 
-<!-- 鈹€鈹€ Login 鈹€鈹€ -->
+<!-- ── Login ── -->
 <div class="login hidden" id="login">
   <div class="orb"></div>
   <h1>Claude</h1>
-  <p class="sub">Enter the channel.</p>
+  <p class="sub">进入你和沈洛的频道</p>
   <form id="loginForm" autocomplete="off">
-    <input id="secretInput" type="password" inputmode="text" placeholder="Channel key" autocomplete="off" spellcheck="false">
-    <button type="submit">Connect</button>
+    <input id="secretInput" type="password" inputmode="text" placeholder="频道密钥" autocomplete="off" spellcheck="false">
+    <button type="submit">连接</button>
     <p class="err" id="loginErr"></p>
   </form>
 </div>
@@ -3263,7 +3261,7 @@ const AI_NAME = CONFIG.AI_NAME, HUMAN_NAME = CONFIG.HUMAN_NAME, APP_NAME = CONFI
 const API_BASE = "";               // same-origin root; relay serves API + static from one process
 const USE_MOCK  = false;          // true = self-contained demo with fake data (no backend needed)
 const LS_KEY    = "companion_secret";
-const APP_AUTH_OPTIONAL = true;
+const APP_AUTH_OPTIONAL = false;
 
 /* 鈹€鈹€ 鐘舵€?鈹€鈹€ */
 let secret  = localStorage.getItem(LS_KEY) || (APP_AUTH_OPTIONAL ? "__app_optional_auth__" : "");
