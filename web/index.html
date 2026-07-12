@@ -2264,14 +2264,12 @@
     .bubble{ max-width:82vw; }
     .composer{ width:100vw; }
     .composer .field{ min-height:82px; }
-    .home-status-top{
-      grid-template-columns:minmax(0, 1fr) auto;
+    .home-status-card{
+      flex-direction:column;
     }
-    .home-avatar{
-      display:none;
-    }
-    .home-online{
-      align-self:start;
+    .home-status-left{
+      width:100%;
+      min-height:100px;
     }
   }
   @media (min-width: 641px){
@@ -2871,42 +2869,78 @@
     padding:20px 18px;
     margin-bottom:14px;
     display:flex;
-    flex-direction:column;
-    gap:14px;
+    flex-direction:row;
+    gap:18px;
+    align-items:stretch;
   }
-  .home-status-top{
-    display:grid;
-    grid-template-columns:48px minmax(0, 1fr) auto;
-    align-items:center;
-    gap:13px;
-    min-width:0;
-  }
-  .home-avatar{
-    width:48px;
-    height:48px;
-    border-radius:14px;
-    background:#F2E4D5;
+  .home-status-left{
+    flex:none;
+    width:120px;
+    min-height:120px;
+    border-radius:16px;
+    background:#F5F2EB;
     display:grid;
     place-items:center;
-    color:#B86A43;
-    font-size:20px;
-    line-height:1;
+    overflow:hidden;
   }
-  .home-status-top h2{
+  .home-status-right{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .home-status-right h2{
     margin:0;
     color:#111;
-    font-size:20px;
+    font-size:18px;
     line-height:1.15;
     font-weight:750;
   }
-  .home-status-top p{
-    margin:6px 0 0;
-    color:#6F675D;
-    font-size:14px;
-    line-height:1.2;
-    white-space:nowrap;
+  .home-state-grid{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin:0;
+  }
+  .home-bar-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .home-bar-label{
+    width:68px;
+    flex:none;
+    font-size:10px;
+    font-weight:700;
+    color:#A29B91;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .home-bar-track{
+    flex:1;
+    height:6px;
+    border-radius:3px;
+    background:#F0EDE7;
     overflow:hidden;
-    text-overflow:ellipsis;
+    min-width:0;
+  }
+  .home-bar-fill{
+    height:100%;
+    border-radius:3px;
+    transition:width .5s ease;
+  }
+  .home-bar-fill[data-dim="attach"]{background:#DE886D}
+  .home-bar-fill[data-dim="stress"]{background:#C75050}
+  .home-bar-fill[data-dim="fatigue"]{background:#8B7CC8}
+  .home-bar-fill[data-dim="libido"]{background:#E07898}
+  .home-bar-val{
+    width:30px;
+    flex:none;
+    text-align:right;
+    font-size:12px;
+    font-weight:700;
+    color:#555;
   }
   .home-status-main{
     display:flex;
@@ -2945,53 +2979,6 @@
     color:#8E887F;
     font-size:13px;
     line-height:1.15;
-  }
-  .home-online{
-    flex:none;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:5px 10px;
-    border-radius:999px;
-    background:#E8EFE2;
-    color:#4D9A58;
-    font-size:13px;
-    font-weight:650;
-  }
-  .home-online i{
-    width:6px;
-    height:6px;
-    border-radius:50%;
-    background:#4D9A58;
-  }
-  .home-state-grid{
-    display:grid;
-    grid-template-columns:repeat(4, minmax(0, 1fr));
-    gap:8px;
-    margin:0;
-  }
-  .home-state-grid div{
-    min-width:0;
-    border-radius:12px;
-    background:#F3F1EC;
-    padding:12px 8px;
-    text-align:center;
-  }
-  .home-state-grid strong{
-    display:block;
-    color:#111;
-    font-size:17px;
-    line-height:1.1;
-    font-weight:750;
-  }
-  .home-state-grid span{
-    display:block;
-    margin-top:5px;
-    color:#A29B91;
-    font-size:10px;
-    line-height:1;
-    font-weight:750;
-    letter-spacing:.06em;
   }
   .home-mood{
     display:flex;
@@ -3138,7 +3125,7 @@
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
 </div>
 
-<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong id="desireAttach">0.40</strong><span>ATTACHMENT</span></div><div><strong id="desireStress">0.10</strong><span>STRESS</span></div><div><strong id="desireFatigue">0.00</strong><span>FATIGUE</span></div><div><strong id="desireLibido">0.20</strong><span>LIBIDO</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text" id="desireDesc">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
+<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-left" id="statusAnimArea"></div><div class="home-status-right"><h2 id="menuAiName">沈洛</h2><div class="home-state-grid"><div class="home-bar-row"><span class="home-bar-label">Attachment</span><div class="home-bar-track"><div class="home-bar-fill" id="barAttach" data-dim="attach" style="width:40%"></div></div><span class="home-bar-val" id="valAttach">0.40</span></div><div class="home-bar-row"><span class="home-bar-label">Stress</span><div class="home-bar-track"><div class="home-bar-fill" id="barStress" data-dim="stress" style="width:10%"></div></div><span class="home-bar-val" id="valStress">0.10</span></div><div class="home-bar-row"><span class="home-bar-label">Fatigue</span><div class="home-bar-track"><div class="home-bar-fill" id="barFatigue" data-dim="fatigue" style="width:0%"></div></div><span class="home-bar-val" id="valFatigue">0.00</span></div><div class="home-bar-row"><span class="home-bar-label">Libido</span><div class="home-bar-track"><div class="home-bar-fill" id="barLibido" data-dim="libido" style="width:20%"></div></div><span class="home-bar-val" id="valLibido">0.20</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text" id="desireDesc">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
 
 <div class="call-overlay hidden" id="callOverlay" aria-hidden="true">
   <div class="call-mini" id="callMini">
@@ -3395,6 +3382,7 @@ function applyIdentity(){
   setAttr(".incoming-call-avatar", "aria-label", AI_NAME);
   setText(".menu-title", APP_NAME);
   setText("#peerName", AI_NAME);
+  setText("#menuAiName", AI_NAME);
   const since = document.querySelector(".menu-since");
   if (since) since.textContent = CONFIG.SINCE ? ("since " + CONFIG.SINCE) : "";
 }
@@ -3435,7 +3423,7 @@ document.addEventListener("keydown", (e) => {
 /* 鈹€鈹€ Main menu (hub 路 entered from the chat back-arrow). Chat returns to chat. 鈹€鈹€ */
 const backBtn = $("#backBtn");
 const menuPanel = $("#menuPanel"), menuDaysEl = $("#menuDays");
-const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate"), menuModelLabel = $("#menuModelLabel");
+const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate");
 const memoryPanel = $("#memoryPanel"), memoryClose = $("#memoryClose"), memoryList = $("#memoryList"), memoryCount = $("#memoryCount");
 const memoryImportBtn = $("#memoryImportBtn"), memoryImportInput = $("#memoryImportInput"), homeMemoryMeta = $("#homeMemoryMeta");
 const TOGETHER_START = (function(){
@@ -3461,10 +3449,6 @@ function updateHomeMenu(){
   }
   if (menuDate){
     menuDate.textContent = new Intl.DateTimeFormat("en-US", { weekday:"long", month:"long", day:"numeric" }).format(now);
-  }
-  if (menuModelLabel){
-    const current = "";
-    menuModelLabel.textContent = current && typeof modelDisplayLabel === "function" ? modelDisplayLabel(current) : "Companion mode";
   }
   refreshMemoryMeta();
 }
@@ -3566,24 +3550,35 @@ let menuCloseTimer = null;
 
 /* ── desire system: 4-dimension status card ── */
 const _desireEls = {
-  attach: null, stress: null, fatigue: null, libido: null, desc: null,
+  barAttach: null, barStress: null, barFatigue: null, barLibido: null,
+  valAttach: null, valStress: null, valFatigue: null, valLibido: null,
+  desc: null,
 };
 function _cacheDesireEls(){
-  if (_desireEls.attach) return;
-  _desireEls.attach = document.getElementById("desireAttach");
-  _desireEls.stress = document.getElementById("desireStress");
-  _desireEls.fatigue = document.getElementById("desireFatigue");
-  _desireEls.libido = document.getElementById("desireLibido");
+  if (_desireEls.barAttach) return;
+  _desireEls.barAttach = document.getElementById("barAttach");
+  _desireEls.barStress = document.getElementById("barStress");
+  _desireEls.barFatigue = document.getElementById("barFatigue");
+  _desireEls.barLibido = document.getElementById("barLibido");
+  _desireEls.valAttach = document.getElementById("valAttach");
+  _desireEls.valStress = document.getElementById("valStress");
+  _desireEls.valFatigue = document.getElementById("valFatigue");
+  _desireEls.valLibido = document.getElementById("valLibido");
   _desireEls.desc = document.getElementById("desireDesc");
 }
 function updateDesireUI(d){
   if (!d) return;
   _cacheDesireEls();
-  if (_desireEls.attach) _desireEls.attach.textContent = (d.attachment ?? 0).toFixed(2);
-  if (_desireEls.stress) _desireEls.stress.textContent = (d.stress ?? 0).toFixed(2);
-  if (_desireEls.fatigue) _desireEls.fatigue.textContent = (d.fatigue ?? 0).toFixed(2);
-  if (_desireEls.libido) _desireEls.libido.textContent = (d.libido ?? 0).toFixed(2);
-  if (_desireEls.desc && d.description) _desireEls.desc.textContent = "状态：" + d.description;
+  const a = d.attachment ?? 0, s = d.stress ?? 0, f = d.fatigue ?? 0, l = d.libido ?? 0;
+  if (_desireEls.barAttach) _desireEls.barAttach.style.width = Math.round(a * 100) + "%";
+  if (_desireEls.barStress) _desireEls.barStress.style.width = Math.round(s * 100) + "%";
+  if (_desireEls.barFatigue) _desireEls.barFatigue.style.width = Math.round(f * 100) + "%";
+  if (_desireEls.barLibido) _desireEls.barLibido.style.width = Math.round(l * 100) + "%";
+  if (_desireEls.valAttach) _desireEls.valAttach.textContent = a.toFixed(2);
+  if (_desireEls.valStress) _desireEls.valStress.textContent = s.toFixed(2);
+  if (_desireEls.valFatigue) _desireEls.valFatigue.textContent = f.toFixed(2);
+  if (_desireEls.valLibido) _desireEls.valLibido.textContent = l.toFixed(2);
+  if (_desireEls.desc && d.description) _desireEls.desc.textContent = "\u72B6\u6001\uff1a" + d.description;
 }
 async function fetchDesire(){
   try{
@@ -4545,7 +4540,6 @@ let _currentModelId = "";
 function setModelUi(model){
   _currentModelId = model || "";
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
-  if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
 }
 
