@@ -33,8 +33,8 @@ HISTORY_FILE = Path(os.environ.get(
 # ── 衰减常数 ──────────────────────────────────────────────
 
 # 每小时自然变化（不聊天时）
-ATTACH_GROW_DAY   = 0.050   # 白天每小时涨 0.05（~6h 从 0.45→0.75）
-ATTACH_GROW_NIGHT = 0.080   # 夜间每小时涨 0.08（想念加速）
+ATTACH_GROW_DAY   = 0.150   # 白天每小时涨 0.15（~3h 从 0.55→1.0）
+ATTACH_GROW_NIGHT = 0.250   # 夜间每小时涨 0.25（~1.8h 循环）
 STRESS_DECAY      = 0.015   # 压力每小时自然消退
 FATIGUE_GROW_DAY  = 0.020   # 白天每小时累一点
 FATIGUE_GROW_NIGHT = 0.040  # 夜间每小时累更快

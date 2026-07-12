@@ -194,10 +194,10 @@ convo: "collections.deque[dict]" = collections.deque(maxlen=max(HISTORY_N * 2, 8
 desire_state = desire.DesireState()
 
 # ── 主动发消息（沈洛自己想找你说话）──
-_AUTO_THRESHOLD = float(os.environ.get("AUTO_SEND_THRESHOLD", "0.75"))
+_AUTO_THRESHOLD = float(os.environ.get("AUTO_SEND_THRESHOLD", "1.00"))
 _AUTO_COOLDOWN  = int(os.environ.get("AUTO_SEND_COOLDOWN", "3600"))   # 最少间隔秒数
 _AUTO_MIN_IDLE  = int(os.environ.get("AUTO_SEND_MIN_IDLE", "7200"))  # 距上次聊天至少多久才触发
-_AUTO_DROP      = float(os.environ.get("AUTO_SEND_DROP", "0.30"))    # 发完后 attachment 回落量
+_AUTO_DROP      = float(os.environ.get("AUTO_SEND_DROP", "0.45"))    # 发完后 attachment 回落量（1.0→0.55）
 _last_auto_send_ts: float = 0.0
 
 
