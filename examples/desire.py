@@ -84,7 +84,7 @@ class DesireState:
     """四维欲望状态，带持久化和自然衰减。"""
 
     def __init__(self):
-        self.attachment = 0.40
+        self.attachment = 0.50
         self.stress = 0.10
         self.fatigue = 0.00
         self.libido = 0.20
@@ -98,7 +98,7 @@ class DesireState:
             return False
         try:
             data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-            self.attachment = float(data.get("attachment", 0.40))
+            self.attachment = float(data.get("attachment", 0.50))
             self.stress = float(data.get("stress", 0.10))
             self.fatigue = float(data.get("fatigue", 0.00))
             self.libido = float(data.get("libido", 0.20))
