@@ -5624,8 +5624,8 @@ function estImageHeight(a){
 }
 function estimatedHeight(row){
   if (rowHeights.has(row.key)) return rowHeights.get(row.key);
-  if (row.type === "day") return DEFAULT_DAY_HEIGHT;
-  if (row.type === "new") return DEFAULT_NEW_HEIGHT;
+  if (row.type === "day") return 0;
+  if (row.type === "new") return 0;
   if (row.type === "thinking") return DEFAULT_THINK_HEIGHT;
   if (row.type === "act") return DEFAULT_ACT_HEIGHT;
   const m = row.message;
