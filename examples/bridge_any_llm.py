@@ -200,6 +200,7 @@ _AUTO_MIN_IDLE  = int(os.environ.get("AUTO_SEND_MIN_IDLE", "7200"))  # 距上次
 _AUTO_DROP      = float(os.environ.get("AUTO_SEND_DROP", "0.45"))    # 发完后 attachment 回落量（1.0→0.55）
 _last_auto_send_ts: float = 0.0
 _auto_unreplied_count: int = 0   # 连续主动发消息且对方未回复的次数
+_last_api_session: str = ""      # 最近一条人类消息的 api_session，auto-send 时带上
 
 
 _TAG_LEVEL = {
@@ -464,7 +465,7 @@ def _auto_message_loop() -> None:
                 continue
 
             # ── 发送 ──
-            send_reply(reply.strip())
+            send_reply(reply.strip(), api_session=_last_api_session)
             log("auto", f"sent ({len(reply)} chars, model={model_used})")
 
             # ── 回落 attachment + 更新状态 ──
@@ -767,6 +768,7 @@ def handle_human_message(msg: dict) -> None:
 
 def _process_flushed_messages(msgs: list) -> None:
     """Process a batch of flushed messages: retrieve memory → build context → call LLM → reply → extract."""
+    global _last_api_session
     # Get the latest message's text for memory retrieval
     latest_text = ""
     for m in reversed(msgs):
@@ -894,6 +896,7 @@ def _process_flushed_messages(msgs: list) -> None:
             reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
         convo.append({"role": "assistant", "content": reply})
         api_session = msgs[-1].get("api_session") or ""
+        _last_api_session = api_session  # 记住，auto-send 时用
         send_reply(reply, api_session=api_session)
 
         # ── 欲望系统：对话后更新状态 ──
