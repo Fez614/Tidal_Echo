@@ -98,6 +98,21 @@ MODEL_CONFIG_FILE = os.environ.get("MODEL_CONFIG_FILE", "").strip()
 RELATIONSHIP_FILE = os.environ.get("RELATIONSHIP_FILE", "").strip()
 MEMORY_BANK_FILE = os.environ.get("MEMORY_BANK_FILE", "").strip()
 
+# ── 分层模型路由：按消息复杂度自动选择模型 ──
+_TIER_OPUS   = os.environ.get("TIER_MODEL_OPUS", "").strip()
+_TIER_SONNET = os.environ.get("TIER_MODEL_SONNET", "").strip()
+_TIER_HAIKU  = os.environ.get("TIER_MODEL_HAIKU", "").strip()
+_TIER_API_BASE = os.environ.get("TIER_API_BASE", "").rstrip("/") or (MODEL_ROUTES[0]["base"] if MODEL_ROUTES else "")
+_TIER_API_KEY  = os.environ.get("TIER_API_KEY", "").strip() or (MODEL_ROUTES[0]["key"] if MODEL_ROUTES else "")
+_TIER_ENABLED  = bool(_TIER_OPUS and _TIER_SONNET and _TIER_HAIKU and _TIER_API_KEY)
+
+# 色情/亲密 roleplay 关键词 → 强制 sonnet（不用 opus）
+_NSFW_KW = (
+    "想要", "进来", "插", "舔", "吮", "呻吟", "高潮", "射了", "湿了",
+    "进去", "深一点", "快一点", "用力", "叫出来", "夹紧", "颤抖",
+    "喘息", "嗯啊", "啊啊", "哈啊", "不要停", "还要", "给我",
+)
+
 # persona = 模型的人设(system prompt)。从 PERSONA 文本或 PERSONA_FILE 文件读。
 PERSONA = os.environ.get("PERSONA", "").strip()
 _persona_file = os.environ.get("PERSONA_FILE", "").strip()
@@ -221,6 +236,97 @@ def _ts() -> str:
     return time.strftime("[%H:%M] ")
 
 
+# ── 分层模型路由 ─────────────────────────────────────────────────
+
+_CLASSIFY_PROMPT = (
+    "你是消息分类器。判断用户消息的情感复杂度，只回复一个数字：\n"
+    "1 = 极简（打招呼、确认、单字、纯 logistical，如「嗯」「好的」「吃了吗」「哈哈」）\n"
+    "2 = 普通对话（日常分享、一般聊天、简单问答、轻度情感）\n"
+    "3 = 高情感/深度（倾诉烦恼、争执冲突、深度亲密表达、长文认真讨论、重大事件分享）\n\n"
+    "如果消息包含明显的性暗示或亲密 roleplay 内容（接吻拥抱不算），在数字后加 +N。\n"
+    "只回复数字，如 1、2、3、2+N、3+N。不要解释。"
+)
+
+def classify_message(text: str, convo_tail: list) -> tuple:
+    """Classify message complexity. Returns (tier: int, nsfw: bool).
+    tier: 1=haiku, 2=sonnet, 3=opus. nsfw=True forces sonnet over opus."""
+    # 快速路径：关键词预判 NSFW
+    nsfw_hint = any(kw in text for kw in _NSFW_KW)
+
+    if not _TIER_ENABLED:
+        return (2, nsfw_hint)  # 未配置分层 → 默认 sonnet 级别（走原有 MODEL_ROUTES）
+
+    try:
+        route = {"base": _TIER_API_BASE, "key": _TIER_API_KEY, "model": _TIER_HAIKU}
+        msgs = [{"role": "system", "content": _CLASSIFY_PROMPT}]
+        # 带最近 2 轮上下文帮分类器理解语境
+        for m in convo_tail[-4:]:
+            msgs.append(m)
+        msgs.append({"role": "user", "content": text})
+        result = _one_call(route, msgs)
+        result = result.strip()
+        nsfw = "+N" in result or "+n" in result
+        tier = int(result.replace("+N", "").replace("+n", "").strip()[:1])
+        tier = max(1, min(3, tier))
+        log("tier", f"classify → {tier}{' nsfw' if nsfw else ''} (text={text[:40]})")
+        return (tier, nsfw)
+    except Exception as e:
+        log("tier", f"classify failed: {e}, defaulting to tier 2")
+        return (2, nsfw_hint)
+
+
+def call_tiered(messages: list, tier: int, nsfw: bool) -> tuple:
+    """Call the appropriate model based on tier. Returns (reply, model_name, fallback_note).
+    fallback_note is non-empty string if the primary model failed and fell back."""
+    if not _TIER_ENABLED:
+        reply, model_used = call_llm(messages)
+        return (reply, model_used, "")
+
+    # NSFW → 强制 sonnet，不管 tier 多高
+    if nsfw and tier == 3:
+        tier = 2
+        log("tier", "nsfw detected → downgrade opus to sonnet")
+
+    target_model = {1: _TIER_HAIKU, 2: _TIER_SONNET, 3: _TIER_OPUS}[tier]
+    route = {"base": _TIER_API_BASE, "key": _TIER_API_KEY, "model": target_model}
+    fallback_note = ""
+
+    try:
+        reply = _one_call(route, messages)
+        log("model", target_model)
+        return (reply, target_model, "")
+    except urllib.error.HTTPError as e:
+        if e.code in FALLBACK_CODES:
+            # 降级：opus → sonnet → haiku → 原有 MODEL_ROUTES
+            fallback_order = [_TIER_SONNET, _TIER_HAIKU] if tier == 3 else [_TIER_HAIKU] if tier == 2 else []
+            for fb_model in fallback_order:
+                if fb_model == target_model:
+                    continue
+                try:
+                    fb_route = {"base": _TIER_API_BASE, "key": _TIER_API_KEY, "model": fb_model}
+                    reply = _one_call(fb_route, messages)
+                    short_target = target_model.split("/")[-1]
+                    short_fb = fb_model.split("/")[-1]
+                    fallback_note = f"主模型 {short_target} 不可用，此回复由 {short_fb} 生成"
+                    log("model", f"{target_model} HTTP {e.code} → fallback to {fb_model}")
+                    return (reply, fb_model, fallback_note)
+                except Exception:
+                    continue
+            # 分层模型全挂 → 走原有 MODEL_ROUTES
+            reply, model_used = call_llm(messages)
+            short_target = target_model.split("/")[-1]
+            short_used = model_used.split("/")[-1] if model_used else "?"
+            fallback_note = f"主模型 {short_target} 不可用，此回复由 {short_used} 生成"
+            return (reply, model_used, fallback_note)
+        raise
+    except (urllib.error.URLError, TimeoutError):
+        reply, model_used = call_llm(messages)
+        short_target = target_model.split("/")[-1]
+        short_used = model_used.split("/")[-1] if model_used else "?"
+        fallback_note = f"主模型 {short_target} 不可用，此回复由 {short_used} 生成"
+        return (reply, model_used, fallback_note)
+
+
 def _require_config() -> None:
     missing = []
     if not RELAY_URL: missing.append("RELAY_URL")
@@ -282,14 +388,19 @@ def _fetch_image_base64(url: str) -> str:
         return ""
 
 
-def send_reply(text: str, api_session: str = "") -> None:
-    """AI 的回复 → 落库 + 扇出到 PWA。"""
+def send_reply(text: str, api_session: str = "", model_name: str = "", fallback_note: str = "") -> None:
+    """AI 的回复 → 落库 + 扇出到 PWA。model_name 和 fallback_note 放进 meta 供前端展示。"""
     payload = {
         "type": "reply", "chat_id": CHAT_ID, "text": text,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     if api_session:
         payload["api_session"] = api_session
+    if model_name:
+        short = model_name.split("/")[-1] if "/" in model_name else model_name
+        payload["model_name"] = short
+    if fallback_note:
+        payload["fallback_note"] = fallback_note
     out = relay_post_json("/channel/out", payload)
     log("out", f"replied (id={out.get('id')})")
 
@@ -463,14 +574,14 @@ def _auto_message_loop() -> None:
             convo_snapshot = list(convo)
             messages = [{"role": "system", "content": sys_content}] + convo_snapshot[-6:]
 
-            reply, model_used = call_llm(messages)
+            reply, model_used, fallback_note = call_tiered(messages, tier=2, nsfw=False)
 
             if not reply or len(reply.strip()) < 2:
                 log("auto", "empty reply, skipping")
                 continue
 
             # ── 发送 ──
-            send_reply(reply.strip(), api_session=_last_api_session)
+            send_reply(reply.strip(), api_session=_last_api_session, model_name=model_used, fallback_note=fallback_note)
             log("auto", f"sent ({len(reply)} chars, model={model_used})")
 
             # ── 回落 attachment + 更新状态 ──
@@ -887,22 +998,26 @@ def _process_flushed_messages(msgs: list) -> None:
         text_preview = c[:100] if isinstance(c, str) else str(c)[:100]
         log("debug", f"msg[{i}] role={m['role']}: {text_preview}")
     try:
-        reply, actual_model = call_llm(messages, tools=tools)
+        if tools:
+            # 带工具的调用走原有 MODEL_ROUTES（工具兼容性更重要）
+            reply, actual_model = call_llm(messages, tools=tools)
+            fallback_note = ""
+        elif _TIER_ENABLED and last_text_content:
+            tier, nsfw = classify_message(last_text_content, list(convo))
+            reply, actual_model, fallback_note = call_tiered(messages, tier, nsfw)
+        else:
+            reply, actual_model = call_llm(messages)
+            fallback_note = ""
     except Exception as e:
         log("err", f"生成失败: {e}")
         send_generation_error(e)
         return
 
     if reply:
-        configured = active_model_routes()[0]["model"] if active_model_routes() else ""
-        if actual_model and actual_model != configured:
-            short_actual = actual_model.split("/")[-1] if "/" in actual_model else actual_model
-            short_configured = configured.split("/")[-1] if "/" in configured else configured
-            reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
         convo.append({"role": "assistant", "content": _ts() + reply})
         api_session = msgs[-1].get("api_session") or ""
         _last_api_session = api_session  # 记住，auto-send 时用
-        send_reply(reply, api_session=api_session)
+        send_reply(reply, api_session=api_session, model_name=actual_model, fallback_note=fallback_note)
 
         # ── 欲望系统：对话后更新状态 ──
         desire_state.update_from_conversation(last_text_content, reply)

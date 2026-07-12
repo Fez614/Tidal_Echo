@@ -534,6 +534,15 @@
   .meta .tick.clock{ color: var(--tick); }
   .meta .tick.clock svg{ width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
 
+  /* ── model tag: small label under AI bubbles showing which model replied ── */
+  .model-tag{
+    display:none;
+    font-size:10px; color:#B0A99F; margin-top:2px; padding-left:4px;
+    letter-spacing:.02em; line-height:1;
+  }
+  .row.ai.tail .model-tag{ display:block; }
+  .model-tag .fallback{ color:#C4A882; }
+
   /* 鈹€鈹€ thinking 鈹€鈹€ collapsed follows AI bubble; expanded becomes a quiet reading section 鈹€鈹€ */
   .row.think{
     justify-content: flex-start;
@@ -5805,6 +5814,15 @@ function makeMessage(rowData){
     });
   }else fillMeta(metaEl, m.ts, m.from === "human");
   row.appendChild(bubble);
+  // model tag — small label under AI bubbles showing which model replied
+  if (m.from === "ai" && m.meta && m.meta.model_name){
+    const tag = document.createElement("div");
+    tag.className = "model-tag";
+    let tagHtml = escapeHtml(m.meta.model_name);
+    if (m.meta.fallback_note) tagHtml += ` <span class="fallback">· ${escapeHtml(m.meta.fallback_note)}</span>`;
+    tag.innerHTML = tagHtml;
+    row.appendChild(tag);
+  }
   // reaction chips 鈥?AI poke (one-way: AI 鈫?you), rendered only under your own bubbles; not under the AI's
   const reactions = (m.from === "human" && m.meta && m.meta.reactions && typeof m.meta.reactions === "object") ? m.meta.reactions : null;
   const rxList = reactions ? Object.keys(reactions).map((who) => reactions[who]).filter(Boolean) : [];
@@ -5862,7 +5880,8 @@ function virtualRowSignature(row){
     const _atts = (m.meta && Array.isArray(m.meta.attachments)) ? m.meta.attachments : [];
     const _attSig = _atts.map((a) => `${a.kind || ""}:${a.url || a.localUrl || ""}:${a.uploading ? 1 : 0}:${a.failed ? 1 : 0}`).join(",");
     const _rxSig = (m.meta && m.meta.reactions) ? JSON.stringify(m.meta.reactions) : "";
-    return [row.key, row.type, m.status || "", m.id, m.ts, m.text || "", _attSig, row.grouped ? 1 : 0, row.tail ? 1 : 0, openThinkKeys.has(m._key) ? 1 : 0, openActKeys.has(m._key) ? 1 : 0, _rxSig].join("~");
+    const _modelSig = (m.meta && m.meta.model_name) ? m.meta.model_name : "";
+    return [row.key, row.type, m.status || "", m.id, m.ts, m.text || "", _attSig, row.grouped ? 1 : 0, row.tail ? 1 : 0, openThinkKeys.has(m._key) ? 1 : 0, openActKeys.has(m._key) ? 1 : 0, _rxSig, _modelSig].join("~");
   }
   return row.key;
 }
