@@ -2264,14 +2264,12 @@
     .bubble{ max-width:82vw; }
     .composer{ width:100vw; }
     .composer .field{ min-height:82px; }
-    .home-status-top{
-      grid-template-columns:minmax(0, 1fr) auto;
+    .home-status-card{
+      flex-direction:column;
     }
-    .home-avatar{
-      display:none;
-    }
-    .home-online{
-      align-self:start;
+    .home-status-left{
+      width:100%;
+      min-height:100px;
     }
   }
   @media (min-width: 641px){
@@ -2871,42 +2869,78 @@
     padding:20px 18px;
     margin-bottom:14px;
     display:flex;
-    flex-direction:column;
-    gap:14px;
+    flex-direction:row;
+    gap:18px;
+    align-items:stretch;
   }
-  .home-status-top{
-    display:grid;
-    grid-template-columns:48px minmax(0, 1fr) auto;
-    align-items:center;
-    gap:13px;
-    min-width:0;
-  }
-  .home-avatar{
-    width:48px;
-    height:48px;
-    border-radius:14px;
-    background:#F2E4D5;
+  .home-status-left{
+    flex:none;
+    width:120px;
+    min-height:120px;
+    border-radius:16px;
+    background:#F5F2EB;
     display:grid;
     place-items:center;
-    color:#B86A43;
-    font-size:20px;
-    line-height:1;
+    overflow:hidden;
   }
-  .home-status-top h2{
+  .home-status-right{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .home-status-right h2{
     margin:0;
     color:#111;
-    font-size:20px;
+    font-size:18px;
     line-height:1.15;
     font-weight:750;
   }
-  .home-status-top p{
-    margin:6px 0 0;
-    color:#6F675D;
-    font-size:14px;
-    line-height:1.2;
-    white-space:nowrap;
+  .home-state-grid{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin:0;
+  }
+  .home-bar-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .home-bar-label{
+    width:68px;
+    flex:none;
+    font-size:10px;
+    font-weight:700;
+    color:#A29B91;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+  .home-bar-track{
+    flex:1;
+    height:6px;
+    border-radius:3px;
+    background:#F0EDE7;
     overflow:hidden;
-    text-overflow:ellipsis;
+    min-width:0;
+  }
+  .home-bar-fill{
+    height:100%;
+    border-radius:3px;
+    transition:width .5s ease;
+  }
+  .home-bar-fill[data-dim="attach"]{background:#DE886D}
+  .home-bar-fill[data-dim="stress"]{background:#C75050}
+  .home-bar-fill[data-dim="fatigue"]{background:#8B7CC8}
+  .home-bar-fill[data-dim="libido"]{background:#E07898}
+  .home-bar-val{
+    width:30px;
+    flex:none;
+    text-align:right;
+    font-size:12px;
+    font-weight:700;
+    color:#555;
   }
   .home-status-main{
     display:flex;
@@ -2945,81 +2979,6 @@
     color:#8E887F;
     font-size:13px;
     line-height:1.15;
-  }
-  .home-online{
-    flex:none;
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:5px 10px;
-    border-radius:999px;
-    background:#E8EFE2;
-    color:#4D9A58;
-    font-size:13px;
-    font-weight:650;
-  }
-  .home-online i{
-    width:6px;
-    height:6px;
-    border-radius:50%;
-    background:#4D9A58;
-  }
-  .home-state-grid{
-    display:grid;
-    grid-template-columns:repeat(4, minmax(0, 1fr));
-    gap:8px;
-    margin:0;
-  }
-  .home-state-grid div{
-    min-width:0;
-    border-radius:12px;
-    background:#F3F1EC;
-    padding:12px 8px;
-    text-align:center;
-  }
-  .home-state-grid strong{
-    display:block;
-    color:#111;
-    font-size:17px;
-    line-height:1.1;
-    font-weight:750;
-  }
-  .home-state-grid span{
-    display:block;
-    margin-top:5px;
-    color:#A29B91;
-    font-size:10px;
-    line-height:1;
-    font-weight:750;
-    letter-spacing:.06em;
-  }
-  .home-mood{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    border-radius:12px;
-    background:#F5F2EB;
-    padding:11px 13px;
-    color:#3B352E;
-    min-width:0;
-  }
-  .home-mood-face{
-    flex:none;
-    display:grid;
-    place-items:center;
-    width:24px;
-    height:24px;
-    border-radius:50%;
-    color:#B86A43;
-    font-size:22px;
-    line-height:1;
-  }
-  .home-mood-text{
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:13px;
   }
   .home-cards{
     display:flex;
@@ -3138,7 +3097,7 @@
   <div class="memory-panel hidden" id="memoryPanel" aria-hidden="true"><div class="memory-page"><div class="memory-head"><button class="memory-back" id="memoryClose" type="button" aria-label="back"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><div class="memory-title"><h1>Memory Bank</h1></div></div><section class="memory-summary"><strong>Summary</strong><p id="memoryCount">Loading memories...</p><button class="memory-import" id="memoryImportBtn" type="button">Import memory file</button><input class="hidden" id="memoryImportInput" type="file" accept=".md,.txt,.json,text/markdown,text/plain,application/json"></section><div class="memory-list" id="memoryList"><div class="memory-empty">No memories yet.</div></div></div></div>
 </div>
 
-<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-top"><div class="home-avatar"><span>*</span></div><div><h2 id="menuAiName">Claude</h2><p id="menuModelLabel">Opus 4.6</p></div><span class="home-online"><i></i>Online</span></div><div class="home-state-grid"><div><strong id="desireAttach">0.40</strong><span>ATTACHMENT</span></div><div><strong id="desireStress">0.10</strong><span>STRESS</span></div><div><strong id="desireFatigue">0.00</strong><span>FATIGUE</span></div><div><strong id="desireLibido">0.20</strong><span>LIBIDO</span></div></div><div class="home-mood"><span class="home-mood-face">*</span><span class="home-mood-text" id="desireDesc">&#29366;&#24577;&#65306;&#23433;&#38745;&#22320;&#22312;&#36825;&#37324;&#65292;&#31561;&#20320;&#32487;&#32493;&#35828;&#35805;</span></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
+<div class="menu-panel hidden" id="menuPanel" role="dialog" aria-modal="true" aria-label="menu"><div class="menu-page"><div class="menu-scroll"><div class="home-head"><button class="home-close" id="menuCloseBtn" type="button" aria-label="back to chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button><div class="home-greeting"><h1 id="menuGreeting">Good evening</h1><p id="menuDate">Friday, July 4</p></div></div><section class="home-status-card"><div class="home-status-left" id="statusAnimArea"></div><div class="home-status-right"><h2 id="menuAiName">沈洛</h2><div class="home-state-grid"><div class="home-bar-row"><span class="home-bar-label">Attachment</span><div class="home-bar-track"><div class="home-bar-fill" id="barAttach" data-dim="attach" style="width:40%"></div></div><span class="home-bar-val" id="valAttach">0.40</span></div><div class="home-bar-row"><span class="home-bar-label">Stress</span><div class="home-bar-track"><div class="home-bar-fill" id="barStress" data-dim="stress" style="width:10%"></div></div><span class="home-bar-val" id="valStress">0.10</span></div><div class="home-bar-row"><span class="home-bar-label">Fatigue</span><div class="home-bar-track"><div class="home-bar-fill" id="barFatigue" data-dim="fatigue" style="width:0%"></div></div><span class="home-bar-val" id="valFatigue">0.00</span></div><div class="home-bar-row"><span class="home-bar-label">Libido</span><div class="home-bar-track"><div class="home-bar-fill" id="barLibido" data-dim="libido" style="width:20%"></div></div><span class="home-bar-val" id="valLibido">0.20</span></div></div></div></section><section class="home-card-list"><button class="home-card home-card-chat" type="button" data-menu="chat"><span class="home-card-copy"><strong>Chat</strong><em>Continue your conversation</em><small>&#25105;&#22312;&#36825;&#20799;&#12290;</small></span></button><button class="home-card" type="button" data-menu="memory"><span class="home-card-copy"><strong>Memory Bank</strong><em id="homeMemoryMeta">Core identity, relationship and moments</em></span><span class="home-card-arrow">&rsaquo;</span></button><button class="home-card" type="button" data-menu="settings"><span class="home-card-copy"><strong>Settings</strong><em>Model, appearance and connection</em></span><span class="home-card-arrow">&rsaquo;</span></button></section></div></div></div>
 
 <div class="call-overlay hidden" id="callOverlay" aria-hidden="true">
   <div class="call-mini" id="callMini">
@@ -3395,6 +3354,7 @@ function applyIdentity(){
   setAttr(".incoming-call-avatar", "aria-label", AI_NAME);
   setText(".menu-title", APP_NAME);
   setText("#peerName", AI_NAME);
+  setText("#menuAiName", AI_NAME);
   const since = document.querySelector(".menu-since");
   if (since) since.textContent = CONFIG.SINCE ? ("since " + CONFIG.SINCE) : "";
 }
@@ -3435,7 +3395,7 @@ document.addEventListener("keydown", (e) => {
 /* 鈹€鈹€ Main menu (hub 路 entered from the chat back-arrow). Chat returns to chat. 鈹€鈹€ */
 const backBtn = $("#backBtn");
 const menuPanel = $("#menuPanel"), menuDaysEl = $("#menuDays");
-const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate"), menuModelLabel = $("#menuModelLabel");
+const menuCloseBtn = $("#menuCloseBtn"), menuGreeting = $("#menuGreeting"), menuDate = $("#menuDate");
 const memoryPanel = $("#memoryPanel"), memoryClose = $("#memoryClose"), memoryList = $("#memoryList"), memoryCount = $("#memoryCount");
 const memoryImportBtn = $("#memoryImportBtn"), memoryImportInput = $("#memoryImportInput"), homeMemoryMeta = $("#homeMemoryMeta");
 const TOGETHER_START = (function(){
@@ -3461,10 +3421,6 @@ function updateHomeMenu(){
   }
   if (menuDate){
     menuDate.textContent = new Intl.DateTimeFormat("en-US", { weekday:"long", month:"long", day:"numeric" }).format(now);
-  }
-  if (menuModelLabel){
-    const current = "";
-    menuModelLabel.textContent = current && typeof modelDisplayLabel === "function" ? modelDisplayLabel(current) : "Companion mode";
   }
   refreshMemoryMeta();
 }
@@ -3566,24 +3522,145 @@ let menuCloseTimer = null;
 
 /* ── desire system: 4-dimension status card ── */
 const _desireEls = {
-  attach: null, stress: null, fatigue: null, libido: null, desc: null,
+  barAttach: null, barStress: null, barFatigue: null, barLibido: null,
+  valAttach: null, valStress: null, valFatigue: null, valLibido: null,
 };
 function _cacheDesireEls(){
-  if (_desireEls.attach) return;
-  _desireEls.attach = document.getElementById("desireAttach");
-  _desireEls.stress = document.getElementById("desireStress");
-  _desireEls.fatigue = document.getElementById("desireFatigue");
-  _desireEls.libido = document.getElementById("desireLibido");
-  _desireEls.desc = document.getElementById("desireDesc");
+  if (_desireEls.barAttach) return;
+  _desireEls.barAttach = document.getElementById("barAttach");
+  _desireEls.barStress = document.getElementById("barStress");
+  _desireEls.barFatigue = document.getElementById("barFatigue");
+  _desireEls.barLibido = document.getElementById("barLibido");
+  _desireEls.valAttach = document.getElementById("valAttach");
+  _desireEls.valStress = document.getElementById("valStress");
+  _desireEls.valFatigue = document.getElementById("valFatigue");
+  _desireEls.valLibido = document.getElementById("valLibido");
 }
 function updateDesireUI(d){
   if (!d) return;
   _cacheDesireEls();
-  if (_desireEls.attach) _desireEls.attach.textContent = (d.attachment ?? 0).toFixed(2);
-  if (_desireEls.stress) _desireEls.stress.textContent = (d.stress ?? 0).toFixed(2);
-  if (_desireEls.fatigue) _desireEls.fatigue.textContent = (d.fatigue ?? 0).toFixed(2);
-  if (_desireEls.libido) _desireEls.libido.textContent = (d.libido ?? 0).toFixed(2);
-  if (_desireEls.desc && d.description) _desireEls.desc.textContent = "状态：" + d.description;
+  const a = d.attachment ?? 0, s = d.stress ?? 0, f = d.fatigue ?? 0, l = d.libido ?? 0;
+  if (_desireEls.barAttach) _desireEls.barAttach.style.width = Math.round(a * 100) + "%";
+  if (_desireEls.barStress) _desireEls.barStress.style.width = Math.round(s * 100) + "%";
+  if (_desireEls.barFatigue) _desireEls.barFatigue.style.width = Math.round(f * 100) + "%";
+  if (_desireEls.barLibido) _desireEls.barLibido.style.width = Math.round(l * 100) + "%";
+  if (_desireEls.valAttach) _desireEls.valAttach.textContent = a.toFixed(2);
+  if (_desireEls.valStress) _desireEls.valStress.textContent = s.toFixed(2);
+  if (_desireEls.valFatigue) _desireEls.valFatigue.textContent = f.toFixed(2);
+  if (_desireEls.valLibido) _desireEls.valLibido.textContent = l.toFixed(2);
+  _updateCrabAnim(d);
+}
+
+/* ── pixel crab status animations (8 states) ── */
+let _crabArea = null, _crabState = "";
+const _crabSVGs = {
+idle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.ci-body{transform-origin:7.5px 13px;animation:ci-breathe 2.8s infinite ease-in-out}
+.ci-shad{transform-origin:7.5px 15.5px;animation:ci-sh 2.8s infinite}
+.ci-eye{transform-origin:7.5px 9px;animation:ci-bl 4s infinite}
+.ci-la{transform-origin:2px 10px;animation:ci-la 3.6s infinite ease-in-out}
+.ci-ra{transform-origin:13px 10px;animation:ci-ra 3.6s -.8s infinite ease-in-out}
+@keyframes ci-breathe{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-.55px) scaleY(1.025)}}
+@keyframes ci-sh{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.94);opacity:.4}}
+@keyframes ci-bl{0%,45%,55%,100%{transform:scaleY(1)}50%{transform:scaleY(.12)}}
+@keyframes ci-la{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(.5px) rotate(-4deg)}}
+@keyframes ci-ra{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(.5px) rotate(4deg)}}
+</style></defs><rect class="ci-shad" x="3" y="15" width="9" height="1" fill="#000" opacity=".5"/><g class="ci-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect class="ci-la" x="0" y="9" width="2" height="2" fill="#DE886D"/><rect class="ci-ra" x="13" y="9" width="2" height="2" fill="#DE886D"/><g class="ci-eye" fill="#111"><rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/></g></g></svg>`,
+
+sleepy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.cs-body{transform-origin:7.5px 13px;animation:cs-breathe 3.5s infinite ease-in-out}
+.cs-z{animation:cs-rise 2.6s var(--d) infinite ease-out}
+.cs-cloud{animation:cs-dream 3s infinite ease-in-out;transform-origin:center}
+@keyframes cs-breathe{50%{transform:scaleY(.96) translateY(.5px)}}
+@keyframes cs-rise{0%{opacity:0;transform:translateY(3px)}35%{opacity:1}100%{opacity:0;transform:translate(3px,-7px)}}
+@keyframes cs-dream{50%{transform:translateY(-.8px) scale(1.04)}}
+</style></defs><ellipse cx="7.5" cy="16" rx="10" ry="1" fill="#000" opacity=".3"/><g class="cs-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><path d="M3.8 9q.7.7 1.4 0M9.8 9q.7.7 1.4 0" fill="none" stroke="#111" stroke-width=".7"/><rect x="0" y="10" width="2" height="2" fill="#DE886D"/><rect x="13" y="10" width="2" height="2" fill="#DE886D"/><g><rect x="2" y="4.8" width="11" height="1.4" fill="#a89bc9"/><path d="M3 4.8Q6 1.2 10.5 3.2L13 2.5L11 5" fill="#796aa3"/><circle cx="13" cy="2.5" r="1" fill="#ece8ff"/></g></g><g class="cs-cloud" fill="#ece8ff"><circle cx="16" cy="-3" r="2"/><circle cx="19" cy="-4" r="3"/><circle cx="22" cy="-2.5" r="2.2"/><rect x="16" y="-3" width="6" height="2.5"/><circle cx="13" cy="1" r=".7"/></g><g fill="#bfaeff" font-family="system-ui,sans-serif"><text class="cs-z" style="--d:0s" x="12" y="6" font-size="3">Z</text><text class="cs-z" style="--d:-1.2s" x="15" y="3" font-size="4">Z</text></g></svg>`,
+
+sad: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.cd-body{transform-origin:7.5px 13px;animation:cd-sink 3s infinite ease-in-out}
+.cd-tear{animation:cd-drop 1.5s infinite ease-in}
+@keyframes cd-sink{50%{transform:translateY(.6px) rotate(1deg)}}
+@keyframes cd-drop{0%{opacity:0;transform:translateY(-1px)}25%{opacity:1}100%{opacity:0;transform:translateY(6px)}}
+</style></defs><ellipse cx="7.5" cy="15.5" rx="5" ry=".6" fill="#000" opacity=".45"/><g class="cd-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect x="0" y="10.5" width="2" height="2" fill="#DE886D"/><rect x="13" y="10.5" width="2" height="2" fill="#DE886D"/><path d="M3.4 8.6q1.1 1.6 2.2 0M9.4 8.6q1.1 1.6 2.2 0" fill="none" stroke="#111" stroke-width="1"/><rect class="cd-tear" x="10.5" y="9.7" width=".8" height="1.8" rx=".4" fill="#64c7ff"/></g></svg>`,
+
+angry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.ca-body{transform-origin:7.5px 13px;animation:ca-shake .38s infinite}
+.ca-smoke{animation:ca-puff 1.2s infinite ease-out}
+@keyframes ca-shake{0%,100%{transform:translateX(-.35px)}50%{transform:translateX(.35px)}}
+@keyframes ca-puff{0%{opacity:0;transform:translateY(2px) scale(.5)}50%{opacity:1}100%{opacity:0;transform:translateY(-5px) scale(1.3)}}
+</style></defs><rect x="3" y="15" width="9" height="1" fill="#000" opacity=".5"/><g class="ca-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect x="-.5" y="8" width="2.5" height="2" fill="#DE886D"/><rect x="13" y="8" width="2.5" height="2" fill="#DE886D"/><path d="M3.5 8l2 1.5M9.5 9.5l2-1.5" fill="none" stroke="#111" stroke-width="1.05"/></g><g class="ca-smoke" fill="#bbb"><rect x="-3" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/></g></svg>`,
+
+happy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.ch-body{transform-box:fill-box;transform-origin:center bottom;animation:ch-hop 1.6s infinite cubic-bezier(.45,0,.2,1)}
+.ch-shad{transform-origin:7.5px 15.5px;animation:ch-sh 1.6s infinite ease-in-out}
+.ch-eye{transform-box:fill-box;transform-origin:center;animation:ch-eye 1.6s infinite steps(1)}
+.ch-star{transform-box:fill-box;transform-origin:center;animation:ch-glow 1.35s var(--d,0s) infinite ease-in-out}
+.ch-la{transform-box:fill-box;transform-origin:right center;animation:ch-la 1.6s infinite ease-in-out}
+.ch-ra{transform-box:fill-box;transform-origin:left center;animation:ch-ra 1.6s infinite ease-in-out}
+@keyframes ch-la{0%,20%,80%,100%{transform:rotate(0)}42%,56%{transform:rotate(-38deg) translateY(-.5px)}}
+@keyframes ch-ra{0%,20%,80%,100%{transform:rotate(0)}42%,56%{transform:rotate(38deg) translateY(-.5px)}}
+@keyframes ch-hop{0%,10%,90%,100%{transform:translateY(0) scaleY(1)}14%{transform:translateY(0) scaleY(.86)}20%{transform:translateY(-1px) scaleY(1.08)}42%{transform:translateY(-9px) scaleY(1)}56%{transform:translateY(-9px) scaleY(1)}80%{transform:translateY(0) scaleY(.84)}88%{transform:translateY(0) scaleY(1)}}
+@keyframes ch-sh{0%,10%,80%,100%{transform:scaleX(1.12);opacity:.55}42%,56%{transform:scaleX(.55);opacity:.2}88%{transform:scaleX(1);opacity:.5}}
+@keyframes ch-eye{0%,20%,80%,100%{transform:scaleY(.12)}21%,79%{transform:scaleY(1)}88%,100%{transform:scaleY(1)}}
+@keyframes ch-glow{0%,100%{opacity:.08;transform:scale(.45)}45%,65%{opacity:1;transform:scale(1)}}
+</style></defs><rect class="ch-shad" x="3" y="15" width="9" height="1" fill="#000" opacity=".5"/><g class="ch-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect class="ch-la" x="0" y="9" width="2" height="2" fill="#DE886D"/><rect class="ch-ra" x="13" y="9" width="2" height="2" fill="#DE886D"/><g class="ch-eye" fill="#111"><rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/></g></g><g fill="#ffd84d"><g class="ch-star" style="--d:0s"><rect x="-5" y="6" width=".8" height="2.6"/><rect x="-5.9" y="6.9" width="2.6" height=".8"/></g><g class="ch-star" style="--d:-.4s"><rect x="17" y="2" width="1.1" height="3.8"/><rect x="15.7" y="3.3" width="3.8" height="1.1"/></g><g class="ch-star" style="--d:-.8s" fill="#fff0a0"><rect x="-2" y="-4" width=".7" height="2.3"/><rect x="-2.8" y="-3.2" width="2.3" height=".7"/></g><g class="ch-star" style="--d:-1.2s"><rect x="13" y="-7" width=".65" height="2"/><rect x="12.3" y="-6.3" width="2" height=".65"/></g><rect class="ch-star" style="--d:-.6s" x="-6" y="-1" width=".8" height=".8"/><rect class="ch-star" style="--d:-1.5s" x="20" y="8" width=".7" height=".7"/></g></svg>`,
+
+thinking: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.ct-body{transform-origin:7.5px 13px;animation:ct-tilt 2.8s infinite ease-in-out}
+.ct-dot{animation:ct-dot 1.8s var(--d) infinite}
+@keyframes ct-tilt{50%{transform:rotate(-3deg)}}
+@keyframes ct-dot{0%,100%{opacity:.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-1px)}}
+</style></defs><rect x="3" y="15" width="9" height="1" fill="#000" opacity=".5"/><g class="ct-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect x="0" y="10" width="2" height="2" fill="#DE886D"/><g transform="rotate(-40 13 10)"><rect x="13" y="9" width="2" height="4" fill="#DE886D"/></g><rect x="4" y="8" width="1" height="2" fill="#111"/><rect x="10" y="8" width="1" height="2" fill="#111"/></g><g fill="#b89cff"><rect class="ct-dot" style="--d:0s" x="14" y="3" width="1" height="1"/><rect class="ct-dot" style="--d:-.3s" x="16" y="1" width="1.4" height="1.4"/><rect class="ct-dot" style="--d:-.6s" x="18.5" y="-1.5" width="2" height="2"/></g></svg>`,
+
+flirty: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.cf-body{transform-origin:7.5px 13px;animation:cf-sway 2.4s infinite ease-in-out}
+.cf-shad{transform-origin:7.5px 15.5px;animation:cf-shadow 2.4s infinite ease-in-out}
+.cf-heart{transform-box:fill-box;transform-origin:center;animation:cf-pulse 1.2s infinite ease-in-out}
+.cf-blush{animation:cf-blush 2s infinite ease-in-out}
+.cf-fh{opacity:0;animation:cf-float 2.8s var(--delay,0s) infinite ease-out}
+.cf-flower{transform-origin:15px 10px;animation:cf-fsway 2s infinite ease-in-out}
+@keyframes cf-sway{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes cf-shadow{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.94);opacity:.42}}
+@keyframes cf-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes cf-blush{0%,100%{opacity:.2}50%{opacity:.48}}
+@keyframes cf-float{0%{opacity:0;transform:translate(0,0) scale(.4)}18%{opacity:.9}82%{opacity:.6}100%{opacity:0;transform:translate(var(--tx,3px),-10px) scale(1.1)}}
+@keyframes cf-fsway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+</style></defs><g fill="#ff8fab"><g class="cf-fh" style="--delay:0s;--tx:3px"><rect x="0" y="0" width="1.3" height=".75"/><rect x="2" y="0" width="1.3" height=".75"/><rect x="0" y=".7" width="3.3" height=".75"/><rect x=".3" y="1.4" width="2.7" height=".75"/><rect x=".7" y="2.1" width="1.9" height=".75"/><rect x="1.2" y="2.8" width=".9" height=".55"/></g><g class="cf-fh" style="--delay:-.9s;--tx:-2px"><rect x="-4" y="2" width="1.2" height=".7"/><rect x="-2.2" y="2" width="1.2" height=".7"/><rect x="-4" y="2.7" width="3" height=".7"/><rect x="-3.7" y="3.4" width="2.4" height=".7"/><rect x="-3.3" y="4.1" width="1.7" height=".7"/><rect x="-2.8" y="4.8" width=".8" height=".5"/></g><g class="cf-fh" style="--delay:-1.8s;--tx:2px"><rect x="9" y="-1" width="1.1" height=".65"/><rect x="10.7" y="-1" width="1.1" height=".65"/><rect x="9" y="-.35" width="2.8" height=".65"/><rect x="9.3" y=".3" width="2.2" height=".65"/><rect x="9.7" y=".95" width="1.5" height=".65"/><rect x="10.1" y="1.6" width=".7" height=".5"/></g></g><ellipse class="cf-shad" cx="7.5" cy="15.8" rx="5.5" ry=".7" fill="#000" opacity=".45"/><g class="cf-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><rect x="0" y="9" width="2" height="2" fill="#DE886D"/><rect x="13" y="9" width="2" height="2" fill="#DE886D"/><g class="cf-heart" fill="#cc1a3a"><rect x="3.5" y="8" width=".8" height=".8"/><rect x="4.7" y="8" width=".8" height=".8"/><rect x="3" y="8.8" width="3" height=".8"/><rect x="3.5" y="9.6" width="2" height=".7"/><rect x="4" y="10.3" width="1" height=".5"/></g><g class="cf-heart" fill="#cc1a3a"><rect x="9.5" y="8" width=".8" height=".8"/><rect x="10.7" y="8" width=".8" height=".8"/><rect x="9" y="8.8" width="3" height=".8"/><rect x="9.5" y="9.6" width="2" height=".7"/><rect x="10" y="10.3" width="1" height=".5"/></g><circle class="cf-blush" cx="3.5" cy="10.8" r="1.2" fill="#ff8fab" opacity=".25"/><circle class="cf-blush" cx="11.5" cy="10.8" r="1.2" fill="#ff8fab" opacity=".25"/></g><g class="cf-flower"><rect x="14.8" y="6.5" width=".6" height="4" fill="#5a9e5a"/><rect x="13.8" y="4.8" width="1" height="1" fill="#ff9ec0"/><rect x="15.8" y="4.8" width="1" height="1" fill="#ff9ec0"/><rect x="13.8" y="6.2" width="1" height="1" fill="#ff9ec0"/><rect x="15.8" y="6.2" width="1" height="1" fill="#ff9ec0"/><rect x="14.8" y="5.5" width="1" height="1" fill="#ffcc44"/></g></svg>`,
+
+coffee: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="120" height="120"><defs><style>
+.co-body{transform-origin:7.5px 13px;animation:co-sip 3.4s infinite ease-in-out}
+.co-shad{transform-origin:7.5px 15.5px;animation:co-shadow 3.4s infinite ease-in-out}
+.co-eye{transform-origin:7.5px 9px;animation:co-blink 3s infinite}
+.co-steam{opacity:0;animation:co-steam 2.4s var(--sd,0s) infinite ease-in}
+@keyframes co-sip{0%,55%,100%{transform:rotate(0) translateY(0)}72%{transform:rotate(-7deg) translateY(-1px)}88%{transform:rotate(0) translateY(0)}}
+@keyframes co-shadow{0%,100%{transform:scaleX(1);opacity:.5}72%{transform:scaleX(.93);opacity:.44}}
+@keyframes co-blink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.1)}}
+@keyframes co-steam{0%{opacity:0;transform:translate(0,0) scaleX(1)}30%{opacity:.6}100%{opacity:0;transform:translate(var(--tx,1px),-8px) scaleX(.5)}}
+</style></defs><rect class="co-shad" x="3" y="15" width="9" height="1" fill="#000" opacity=".5"/><g class="co-body"><g fill="#DE886D"><rect x="3" y="13" width="1" height="2"/><rect x="5" y="13" width="1" height="2"/><rect x="9" y="13" width="1" height="2"/><rect x="11" y="13" width="1" height="2"/></g><rect x="2" y="6" width="11" height="7" fill="#DE886D"/><g class="co-eye" fill="#000"><rect x="4" y="8" width="1" height="2"/><rect x="10" y="8" width="1" height="2"/></g><rect x="6.4" y="10.8" width="2.2" height="1" rx=".5" fill="#7a2230"/><rect x="0.4" y="10" width="2" height="2.2" rx=".3" fill="#DE886D" transform="rotate(40,1.4,11)"/><rect x="12.6" y="10" width="2" height="2.2" rx=".3" fill="#DE886D" transform="rotate(-40,13.6,11)"/><g fill="#fff"><rect class="co-steam" style="--sd:0s;--tx:-1px" x="5.6" y="8.2" width=".7" height="2.4" rx=".35"/><rect class="co-steam" style="--sd:-1.2s;--tx:1px" x="8" y="8.2" width=".7" height="2.4" rx=".35"/></g><g><path d="M11 11 q2.4 .2 2.4 1.6 q0 1.5 -2.4 1.4" fill="none" stroke="#efe9df" stroke-width=".9"/><rect x="4" y="10.4" width="7" height="3.6" rx=".7" fill="#efe9df"/><rect x="4" y="10.4" width="7" height="1" rx=".7" fill="#fff"/><ellipse cx="7.5" cy="10.7" rx="2.9" ry=".8" fill="#5b3a22"/></g></g></svg>`
+};
+
+function _pickCrabState(d){
+  const a = d.attachment ?? 0, s = d.stress ?? 0, f = d.fatigue ?? 0, l = d.libido ?? 0;
+  const aHigh = a > 0.5, sHigh = s >= 0.5, lHigh = l > 0.5;
+  // P1: fatigue gate
+  if (f >= 0.70) return "sleepy";
+  // P2: stress → sad or angry depending on attachment
+  if (sHigh) return aHigh ? "sad" : "angry";
+  // P3: positive states (stress low)
+  if (aHigh && lHigh) return "happy";
+  if (aHigh && !lHigh) return "idle";
+  if (lHigh && !aHigh) return "flirty";
+  // P4: all low → thinking
+  return "thinking";
+}
+
+function _updateCrabAnim(d){
+  if (!_crabArea) _crabArea = document.getElementById("statusAnimArea");
+  if (!_crabArea) return;
+  const state = _pickCrabState(d);
+  if (state === _crabState) return;
+  _crabState = state;
+  _crabArea.innerHTML = _crabSVGs[state] || _crabSVGs.idle;
 }
 async function fetchDesire(){
   try{
@@ -4545,7 +4622,6 @@ let _currentModelId = "";
 function setModelUi(model){
   _currentModelId = model || "";
   if (modelQuickButton) modelQuickButton.textContent = modelDisplayLabel(model);
-  if (menuModelLabel) menuModelLabel.textContent = modelDisplayLabel(model);
   renderModelSheet(model);
 }
 

@@ -27,6 +27,11 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (requestUrl.pathname.startsWith("/app/") || requestUrl.pathname === "/healthz") {
+      await proxyApp(req, res);
+      return;
+    }
+
     const pathname = requestUrl.pathname === "/" ? "/index.html" : decodeURIComponent(requestUrl.pathname);
     const filePath = path.resolve(root, `.${pathname}`);
     if (!filePath.startsWith(root)) throw new Error("Forbidden");
@@ -42,6 +47,38 @@ const server = http.createServer(async (req, res) => {
     res.end(error?.message || "Not found");
   }
 });
+
+async function proxyApp(req, res) {
+  const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
+  const target = new URL(requestUrl.pathname + requestUrl.search, relayOrigin);
+  const headers = {};
+  for (const key of ["authorization", "content-type", "accept"]) {
+    if (req.headers[key]) headers[key] = req.headers[key];
+  }
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const body = chunks.length ? Buffer.concat(chunks) : undefined;
+
+  const upstream = await fetch(target, {
+    method: req.method,
+    headers,
+    body: ["GET", "HEAD"].includes(req.method || "GET") ? undefined : body,
+  });
+
+  res.writeHead(upstream.status, Object.fromEntries(upstream.headers.entries()));
+  if (!upstream.body) {
+    res.end();
+    return;
+  }
+
+  const reader = upstream.body.getReader();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    res.write(Buffer.from(value));
+  }
+  res.end();
+}
 
 async function proxyRelay(req, res) {
   const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
