@@ -1080,7 +1080,7 @@ async def get_desire(request: Request):
     check_auth(request)
     if not desire_state:
         return {
-            "attachment": 0.4, "stress": 0.1,
+            "attachment": 0.5, "stress": 0.1,
             "fatigue": 0.0, "libido": 0.2,
             "description": "安静地在这里",
             "updated": now_iso(),
