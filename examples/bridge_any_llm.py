@@ -216,6 +216,11 @@ def log(tag: str, msg: str) -> None:
     print(f"[{time.strftime('%H:%M:%S')}] [{tag}] {msg}", file=sys.stderr, flush=True)
 
 
+def _ts() -> str:
+    """Return current time as [HH:MM] prefix for conversation messages."""
+    return time.strftime("[%H:%M] ")
+
+
 def _require_config() -> None:
     missing = []
     if not RELAY_URL: missing.append("RELAY_URL")
@@ -479,7 +484,7 @@ def _auto_message_loop() -> None:
             log("desire", f"auto-send: att → {desire_state.attachment:.2f} (drop={effective_drop:.3f}, unreplied={_auto_unreplied_count})")
 
             # 也把这个回复加入对话上下文，这样下次用户说话时模型知道之前主动说过什么
-            convo.append({"role": "assistant", "content": reply.strip()})
+            convo.append({"role": "assistant", "content": _ts() + reply.strip()})
 
         except Exception as e:
             log("auto", f"error: {e}")
@@ -857,7 +862,7 @@ def _process_flushed_messages(msgs: list) -> None:
     else:
         msg_content = merged_text
 
-    convo.append({"role": "user", "content": msg_content})
+    convo.append({"role": "user", "content": _ts() + msg_content if isinstance(msg_content, str) else msg_content})
     messages.append({"role": "user", "content": msg_content})  # must be in messages sent to LLM
 
     if not last_text_content:
@@ -894,7 +899,7 @@ def _process_flushed_messages(msgs: list) -> None:
             short_actual = actual_model.split("/")[-1] if "/" in actual_model else actual_model
             short_configured = configured.split("/")[-1] if "/" in configured else configured
             reply += f"\n\n⟡ _当前主模型 {short_configured} 不可用，此回复由 {short_actual} 生成_"
-        convo.append({"role": "assistant", "content": reply})
+        convo.append({"role": "assistant", "content": _ts() + reply})
         api_session = msgs[-1].get("api_session") or ""
         _last_api_session = api_session  # 记住，auto-send 时用
         send_reply(reply, api_session=api_session)
