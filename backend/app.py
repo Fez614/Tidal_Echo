@@ -216,7 +216,10 @@ def history_for_session(session_id: str, since: int, limit: int) -> list:
         else:
             rows = conn.execute(
                 "SELECT * FROM messages "
-                "WHERE id > ? AND json_extract(meta, '$.api_session') = ? "
+                "WHERE id > ? AND ("
+                "  json_extract(meta, '$.api_session') = ?"
+                "  OR (direction = 'out' AND (json_extract(meta, '$.api_session') IS NULL OR json_extract(meta, '$.api_session') = ''))"
+                ") "
                 "ORDER BY id ASC LIMIT ?",
                 (since, session_id, limit),
             ).fetchall()
