@@ -173,7 +173,14 @@ class DesireState:
         # fatigue: 涨或恢复
         idle_hours = (now - self.last_chat) / 3600.0
         if idle_hours > 0.1:  # 超过 6 分钟没聊天
-            if self._is_overnight(dt) and idle_hours > 3:
+            # Check if an overnight reset window was crossed since last chat
+            # Simple heuristic: idle > 5h + high fatigue = must have slept
+            last_chat_dt = datetime.fromtimestamp(self.last_chat, _TZ)
+            crossed_overnight = (
+                idle_hours > 5               # idle long enough to include sleep
+                and self.fatigue > 0.40      # fatigue still elevated
+            )
+            if (self._is_overnight(dt) and idle_hours > 3) or crossed_overnight:
                 # 过夜重置
                 self.fatigue = 0.05
             else:
