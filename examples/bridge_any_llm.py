@@ -193,6 +193,13 @@ convo: "collections.deque[dict]" = collections.deque(maxlen=max(HISTORY_N * 2, 8
 # 欲望系统：沈洛的四维内在驱动状态（在 main() 中初始化）
 desire_state = desire.DesireState()
 
+# ── 主动发消息（沈洛自己想找你说话）──
+_AUTO_THRESHOLD = float(os.environ.get("AUTO_SEND_THRESHOLD", "0.60"))
+_AUTO_COOLDOWN  = int(os.environ.get("AUTO_SEND_COOLDOWN", "3600"))   # 最少间隔秒数
+_AUTO_MIN_IDLE  = int(os.environ.get("AUTO_SEND_MIN_IDLE", "7200"))  # 距上次聊天至少多久才触发
+_AUTO_DROP      = float(os.environ.get("AUTO_SEND_DROP", "0.12"))    # 发完后 attachment 回落量
+_last_auto_send_ts: float = 0.0
+
 
 _TAG_LEVEL = {
     "fatal": 3, "err": 3, "error": 3,
@@ -387,6 +394,90 @@ def _status_heartbeat() -> None:
                 _report_models()
             except Exception:
                 pass  # best-effort; next tick will retry
+
+
+# ── 主动发消息:attachment 涨到阈值 → 沈洛自己开口 ──
+_AUTO_CHECK_INTERVAL = 300  # 每 5 分钟检查一次
+
+def _auto_message_loop() -> None:
+    """Background thread: periodically check if Shenluo should proactively reach out.
+    Triggered when attachment is high enough, it's daytime, and enough idle time has passed."""
+    global _last_auto_send_ts
+    while True:
+        time.sleep(_AUTO_CHECK_INTERVAL)
+        try:
+            now = time.time()
+            att = desire_state.attachment
+
+            # ── 条件 1: attachment 达到阈值 ──
+            if att < _AUTO_THRESHOLD:
+                continue
+
+            # ── 条件 2: 当前时间在 08:00-23:00 ──
+            _tz = timezone(timedelta(hours=8))
+            _now = datetime.now(_tz)
+            hour = _now.hour
+            if hour < 8 or hour >= 23:
+                continue
+
+            # ── 条件 3: 冷却期 ──
+            if now - _last_auto_send_ts < _AUTO_COOLDOWN:
+                continue
+
+            # ── 条件 4: 距离上次聊天足够久 ──
+            idle_seconds = now - desire_state.last_chat
+            if idle_seconds < _AUTO_MIN_IDLE:
+                continue
+
+            log("auto", f"triggered: att={att:.2f} idle={idle_seconds/3600:.1f}h")
+
+            # ── 生成消息 ──
+            sys_parts = [PERSONA]
+            if RELATIONSHIP_SUMMARY:
+                sys_parts.append(RELATIONSHIP_SUMMARY)
+            mem_ctx = memory.retrieve_context("")
+            if mem_ctx:
+                sys_parts.append(mem_ctx)
+            _weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+            sys_parts.append(f"[当前时间: {_now.strftime('%Y年%m月%d日')} {_weekdays[_now.weekday()]} {_now.strftime('%H:%M')}]")
+            desire_state.apply_decay()
+            _desire_desc = desire_state.prompt_description()
+            sys_parts.append(f"[沈洛此刻的状态]\n{_desire_desc}")
+            sys_parts.append(
+                "[主动消息]\n"
+                "你（沈洛）已经有一阵子没和阿雾说话了，心里惦记她，想主动找她说句话。\n"
+                "直接输出你想对她说的话。不要解释、不要加任何前缀或标签。\n"
+                "要求：简短自然，像手机上突然发过来的一条消息。可以是想她了、分享一个小事、撒个娇、随口一句。\n"
+                "不要以问句结尾。说完就停。"
+            )
+            sys_content = "\n\n".join(p for p in sys_parts if p.strip())
+
+            # 带最近对话上下文，让模型知道之前聊了什么
+            convo_snapshot = list(convo)
+            messages = [{"role": "system", "content": sys_content}] + convo_snapshot[-6:]
+
+            reply, model_used = call_llm(messages)
+
+            if not reply or len(reply.strip()) < 2:
+                log("auto", "empty reply, skipping")
+                continue
+
+            # ── 发送 ──
+            send_reply(reply.strip())
+            log("auto", f"sent ({len(reply)} chars, model={model_used})")
+
+            # ── 回落 attachment + 更新状态 ──
+            desire_state.attachment = max(0.10, desire_state.attachment - _AUTO_DROP)
+            _last_auto_send_ts = now
+            desire_state.save()
+            push_desire()
+            log("desire", f"auto-send: att → {desire_state.attachment:.2f}")
+
+            # 也把这个回复加入对话上下文，这样下次用户说话时模型知道之前主动说过什么
+            convo.append({"role": "assistant", "content": reply.strip()})
+
+        except Exception as e:
+            log("auto", f"error: {e}")
 
 
 def _startup_model_probe() -> None:
@@ -981,6 +1072,7 @@ def main() -> None:
     # 后台线程:启动时探测所有模型可用性并上报,不阻塞主循环
     threading.Thread(target=_startup_model_probe, daemon=True, name="model-probe").start()
     threading.Thread(target=_status_heartbeat, daemon=True, name="status-heartbeat").start()
+    threading.Thread(target=_auto_message_loop, daemon=True, name="auto-message").start()
     stream_inbound(cursor)
 
 
