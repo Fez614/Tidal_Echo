@@ -73,6 +73,12 @@ KW_ANGRY_AT_AI = ("你烦", "你闭嘴", "不想聊", "算了", "无所谓",
 KW_AI_INTIMATE = ("想你", "爱你", "亲亲", "抱抱", "心动", "害羞",
                   "脸红", "mua", "贴贴", "蹭蹭", "好喜欢")
 
+# AI 回复 → 检测敷衍/冷淡（让用户感觉被忽视）
+# 只在 AI 回复很短（<30字）时才检测，避免长回复中误匹配
+KW_AI_DISMISSIVE = ("嗯嗯", "哦哦", "好的呢", "知道了", "随便你",
+                    "都行吧", "没什么好说的", "不想说了", "算了")
+AI_DISMISSIVE_MAX_LEN = 30  # 只在短回复中检测敷衍
+
 
 class DesireState:
     """四维欲望状态，带持久化和自然衰减。"""
@@ -201,24 +207,34 @@ class DesireState:
     # ── 对话驱动更新（每轮回复后调用）──
 
     def update_from_conversation(self, user_text: str, ai_text: str):
-        """根据对话内容调整四维状态。"""
+        """根据对话内容调整四维状态。
+
+        设计原则（沈洛反馈后调整）：
+        - 用户单方面表达亲密 → 只轻微缓解想念（屏幕隔着，满足不了）
+        - AI 回应亲密内容 → 才是真正被满足的主要来源
+        - AI 敷衍/冷淡 → stress 上升、attachment 反而涨（想靠近但够不到）
+        - 对话地板 → attachment 在聊天时不低于 0.10（陪伴中不会完全不想）
+        """
         self.last_chat = time.time()
         self.last_update = time.time()
 
-        # ── 用户消息信号检测 ──
+        # ── 用户消息信号检测（单侧表达，满足感有限）──
 
-        # 亲密信号 → attachment 下降（被满足了）
+        # 说想你 → 轻微缓解（隔着屏幕，说了反而更想）
         if self._has_any(user_text, KW_MISS):
-            self.attachment -= 0.20
+            self.attachment -= 0.05
+        # 爱意表达 → 轻微缓解想念 + 微微升温身体渴望
         if self._has_any(user_text, KW_AFFECTION):
-            self.attachment -= 0.15
-            self.libido += 0.05
+            self.attachment -= 0.04
+            self.libido += 0.03
+        # 调情 → 轻微缓解 + 身体渴望升温
         if self._has_any(user_text, KW_FLIRT):
-            self.attachment -= 0.10
-            self.libido += 0.15
+            self.attachment -= 0.03
+            self.libido += 0.10
+        # 亲密动作 → 身体渴望明显升温，想念轻微缓解
         if self._has_any(user_text, KW_INTIMATE):
-            self.libido += 0.20
-            self.attachment -= 0.10
+            self.libido += 0.12
+            self.attachment -= 0.03
 
         # 负面信号 → stress 上升（承接了情绪）
         if self._has_any(user_text, KW_VENT):
@@ -233,12 +249,18 @@ class DesireState:
             self.stress += 0.20
             self.attachment += 0.05
 
-        # ── AI 回复信号检测（作为对话氛围 proxy）──
+        # ── AI 回复信号检测 ──
 
-        # AI 输出了亲密内容 → 说明对话氛围暧昧，libido 满足回落
+        # AI 回应亲密 → 这才是真正被满足的主要来源
         if self._has_any(ai_text, KW_AI_INTIMATE):
-            self.libido -= 0.20
-            self.stress -= 0.05
+            self.attachment -= 0.08   # 被回应了，想念真正落地
+            self.libido -= 0.10       # 双向亲密，身体渴望释放
+            self.stress -= 0.05       # 亲密氛围缓解压力
+
+        # AI 敷衍/冷淡 → 只在短回复（<30字）时检测，避免误伤
+        if len(ai_text) < AI_DISMISSIVE_MAX_LEN and self._has_any(ai_text, KW_AI_DISMISSIVE):
+            self.stress += 0.08       # 被敷衍，心里堵
+            self.attachment += 0.03   # 想靠近但够不到，反而更想
 
         # ── fatigue：对话本身就消耗精力 ──
         # 基础消耗 + 情绪密度加成
@@ -251,6 +273,11 @@ class DesireState:
         self.stress = self._clip(self.stress)
         self.fatigue = self._clip(self.fatigue)
         self.libido = self._clip(self.libido)
+
+        # ── 对话地板：聊天中 attachment 不低于 0.10 ──
+        # 正在陪伴的人不会完全"不想"对方
+        if self.attachment < 0.10:
+            self.attachment = 0.10
 
     # ── Prompt 注入 ──
 
