@@ -2088,8 +2088,8 @@
     font-family:-apple-system, BlinkMacSystemFont, "Noto Sans SC", "Helvetica Neue", sans-serif;
     font-size:12px;
   }
-  .row{ margin-top:4px; }
-  .row.grouped{ margin-top:2px; }
+  .row{ margin-top:10px; }
+  .row.grouped{ margin-top:4px; }
   .row.ai{ padding-left:0; }
   .row.ai::before{ display:none; }
   .bubble{
@@ -5151,6 +5151,7 @@ function renderText(t){
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   s = s.replace(/(?<!\w)_([^_\n][^_\n]*?)_(?!\w)/g, "<em>$1</em>");
   s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/\n\n+/g, "<br>");
   s = s.replace(/\n/g, "<br>");
   return s;
 }
