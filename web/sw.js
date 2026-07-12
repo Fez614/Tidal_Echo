@@ -3,7 +3,7 @@
    old shell (the precached index.html won't refresh until the SW reinstalls). */
 // ⚠️ SYNC: must match index.html CONFIG.AI_NAME — used only as push-title fallback
 const AI_NAME = "沈洛";
-const CACHE = "companion-v61-bars-vertical";
+const CACHE = "companion-v62-bars-fix";
 const PRECACHE = [
   "./index.html",
   "./chat-light.webp", "./chat-harbor.webp",
