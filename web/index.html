@@ -84,7 +84,7 @@
     --motion-fast: 150ms;
     --motion-normal: 260ms;
     --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-    --composer-zone: calc(104px + env(safe-area-inset-bottom) + var(--keyboard-offset));
+    --composer-zone: calc(122px + env(safe-area-inset-bottom) + var(--keyboard-offset));
     --edge-fade-top: 24px;
     --edge-fade-tail: 20px;
     /* profile / settings — frosted glass, blends into the wallpaper */
@@ -535,12 +535,15 @@
   .meta .tick.clock svg{ width: 1.05em; height: 1.05em; vertical-align: -0.18em; }
 
   /* ── model tag: small label under AI bubbles showing which model replied ── */
+  .ai-col{
+    display:flex; flex-direction:column; align-items:flex-start;
+  }
   .model-tag{
     display:none;
-    font-size:10px; color:#B0A99F; margin-top:2px; padding-left:4px;
+    font-size:10px; color:#B0A99F; margin-top:6px; padding-left:4px;
     letter-spacing:.02em; line-height:1;
   }
-  .row.ai.tail .model-tag{ display:block; }
+  .row.ai .model-tag{ display:block; }
   .model-tag .fallback{ color:#C4A882; }
 
   /* 鈹€鈹€ thinking 鈹€鈹€ collapsed follows AI bubble; expanded becomes a quiet reading section 鈹€鈹€ */
@@ -5813,15 +5816,21 @@ function makeMessage(rowData){
       doSend();
     });
   }else fillMeta(metaEl, m.ts, m.from === "human");
-  row.appendChild(bubble);
   // model tag — small label under AI bubbles showing which model replied
   if (m.from === "ai" && m.meta && m.meta.model_name){
+    const col = document.createElement("div");
+    col.className = "ai-col";
+    // move bubble into column wrapper
+    row.appendChild(col);
+    col.appendChild(bubble);
     const tag = document.createElement("div");
     tag.className = "model-tag";
     let tagHtml = escapeHtml(m.meta.model_name);
     if (m.meta.fallback_note) tagHtml += ` <span class="fallback">· ${escapeHtml(m.meta.fallback_note)}</span>`;
     tag.innerHTML = tagHtml;
-    row.appendChild(tag);
+    col.appendChild(tag);
+  } else {
+    row.appendChild(bubble);
   }
   // reaction chips 鈥?AI poke (one-way: AI 鈫?you), rendered only under your own bubbles; not under the AI's
   const reactions = (m.from === "human" && m.meta && m.meta.reactions && typeof m.meta.reactions === "object") ? m.meta.reactions : null;

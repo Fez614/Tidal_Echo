@@ -33,6 +33,7 @@ import base64
 import collections
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -235,6 +236,12 @@ def _ts() -> str:
     """Return current time as [HH:MM] prefix for conversation messages."""
     return time.strftime("[%H:%M] ")
 
+_STRIP_TS_RE = re.compile(r"^\[\d{2}:\d{2}(?::\d{2})?\]\s*")
+
+def _strip_ts(text: str) -> str:
+    """Strip leading [HH:MM] or [HH:MM:SS] timestamp that the model may echo from context."""
+    return _STRIP_TS_RE.sub("", text)
+
 
 # ── 分层模型路由 ─────────────────────────────────────────────────
 
@@ -242,9 +249,11 @@ _CLASSIFY_PROMPT = (
     "你是消息分类器。判断用户消息的情感复杂度，返回 JSON：\n"
     '{"level": 数字, "nsfw": 布尔}\n\n'
     "level 标准：\n"
-    "1 = 极简（打招呼、确认、单字，如「嗯」「好的」「吃了吗」「哈哈」）\n"
-    "2 = 普通对话（日常分享、一般聊天、简单问答、轻度情感）\n"
-    "3 = 高情感/深度（倾诉烦恼、争执冲突、深度亲密表达、长文认真讨论、重大事件）\n\n"
+    "1 = 轻松日常（打招呼、确认、单字、闲聊、简单问答、短句回应、无深层情绪的随口聊天，"
+    "如「吃了吗」「今天好热」「我去洗澡了」「哈哈真的假的」「晚上吃的面条」）\n"
+    "2 = 需要共情或深度回应（倾诉心事、明显情绪波动、认真提问需要思考、关系讨论、"
+    "较长且认真的对话、分享重要经历或感受）\n"
+    "3 = 高情感/深度（重大情绪事件、争执冲突、深度亲密表达、长文认真讨论、人生重大决定）\n\n"
     "nsfw: 消息包含明显性暗示或亲密 roleplay（接吻拥抱不算）→ true，否则 false\n"
     "只返回 JSON，不要解释。"
 )
@@ -430,6 +439,7 @@ def _fetch_image_base64(url: str) -> str:
 
 def send_reply(text: str, api_session: str = "", model_name: str = "", fallback_note: str = "") -> None:
     """AI 的回复 → 落库 + 扇出到 PWA。model_name 和 fallback_note 放进 meta 供前端展示。"""
+    text = _strip_ts(text)
     payload = {
         "type": "reply", "chat_id": CHAT_ID, "text": text,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -528,25 +538,10 @@ def _status_heartbeat() -> None:
             base, key = route["base"], route["key"]
             for mid, st in list(_model_status_reported.items()):
                 if st == "unavailable":
-                    try:
-                        body = json.dumps({
-                            "model": mid,
-                            "messages": [{"role": "user", "content": "hi"}],
-                            "max_tokens": 1,
-                        }, ensure_ascii=False).encode("utf-8")
-                        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-                        if "openrouter.ai" in base:
-                            headers["HTTP-Referer"] = OPENROUTER_REFERER
-                            headers["X-Title"] = OPENROUTER_TITLE
-                        req = urllib.request.Request(
-                            base + "/chat/completions", data=body, method="POST", headers=headers,
-                        )
-                        with urllib.request.urlopen(req, timeout=30) as _r:
-                            if _r.status == 200:
-                                report_model(mid, True)
-                                log("heartbeat", f"re-probe: {mid} now available")
-                    except Exception:
-                        pass  # still unavailable
+                    if _probe_one(base, key, mid):
+                        report_model(mid, True)
+                        log("heartbeat", f"re-probe: {mid} now available")
+                    time.sleep(1)  # pace re-probes
         if _model_status_reported:
             try:
                 _report_models()
@@ -635,10 +630,40 @@ def _auto_message_loop() -> None:
             log("desire", f"auto-send: att → {desire_state.attachment:.2f} (drop={effective_drop:.3f}, unreplied={_auto_unreplied_count})")
 
             # 也把这个回复加入对话上下文，这样下次用户说话时模型知道之前主动说过什么
-            convo.append({"role": "assistant", "content": _ts() + reply.strip()})
+            convo.append({"role": "assistant", "content": _ts() + _strip_ts(reply.strip())})
 
         except Exception as e:
             log("auto", f"error: {e}")
+
+
+def _probe_one(base: str, key: str, mid: str) -> bool:
+    """Send a minimal chat/completions request to test if a model is reachable.
+    On 429 (rate limit), wait 5s and retry once before giving up."""
+    body = json.dumps({
+        "model": mid,
+        "messages": [{"role": "user", "content": "hi"}],
+        "max_tokens": 1,
+    }, ensure_ascii=False).encode("utf-8")
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    if "openrouter.ai" in base:
+        headers["HTTP-Referer"] = OPENROUTER_REFERER
+        headers["X-Title"] = OPENROUTER_TITLE
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(
+                base + "/chat/completions", data=body, method="POST", headers=headers,
+            )
+            with urllib.request.urlopen(req, timeout=30) as _r:
+                return _r.status == 200
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt == 0:
+                log("probe", f"  {mid} got 429, retrying in 5s…")
+                time.sleep(5)
+                continue
+            return e.code not in FALLBACK_CODES
+        except Exception:
+            return False
+    return False
 
 
 def _startup_model_probe() -> None:
@@ -651,26 +676,8 @@ def _startup_model_probe() -> None:
     base, key = route["base"], route["key"]
     log("probe", f"开始探测 {len(KNOWN_MODELS)} 个模型可用性…")
     for mid in KNOWN_MODELS:
-        time.sleep(0.5)  # space out requests to avoid rate limiting
-        try:
-            body = json.dumps({
-                "model": mid,
-                "messages": [{"role": "user", "content": "hi"}],
-                "max_tokens": 1,
-            }, ensure_ascii=False).encode("utf-8")
-            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-            if "openrouter.ai" in base:
-                headers["HTTP-Referer"] = OPENROUTER_REFERER
-                headers["X-Title"] = OPENROUTER_TITLE
-            req = urllib.request.Request(
-                base + "/chat/completions", data=body, method="POST", headers=headers,
-            )
-            with urllib.request.urlopen(req, timeout=30) as _r:
-                available = (_r.status == 200)
-        except urllib.error.HTTPError as e:
-            available = e.code not in FALLBACK_CODES
-        except Exception:
-            available = False
+        time.sleep(2)  # space out requests to avoid rate limiting
+        available = _probe_one(base, key, mid)
         report_model(mid, available)
         tag = "✓" if available else "✗"
         log("probe", f"  {tag} {mid}")
@@ -1054,7 +1061,7 @@ def _process_flushed_messages(msgs: list) -> None:
         return
 
     if reply:
-        convo.append({"role": "assistant", "content": _ts() + reply})
+        convo.append({"role": "assistant", "content": _ts() + _strip_ts(reply)})
         api_session = msgs[-1].get("api_session") or ""
         _last_api_session = api_session  # 记住，auto-send 时用
         send_reply(reply, api_session=api_session, model_name=actual_model, fallback_note=fallback_note)
