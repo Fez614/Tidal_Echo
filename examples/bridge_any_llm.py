@@ -239,40 +239,80 @@ def _ts() -> str:
 # ── 分层模型路由 ─────────────────────────────────────────────────
 
 _CLASSIFY_PROMPT = (
-    "你是消息分类器。判断用户消息的情感复杂度，只回复一个数字：\n"
-    "1 = 极简（打招呼、确认、单字、纯 logistical，如「嗯」「好的」「吃了吗」「哈哈」）\n"
+    "你是消息分类器。判断用户消息的情感复杂度，返回 JSON：\n"
+    '{"level": 数字, "nsfw": 布尔}\n\n'
+    "level 标准：\n"
+    "1 = 极简（打招呼、确认、单字，如「嗯」「好的」「吃了吗」「哈哈」）\n"
     "2 = 普通对话（日常分享、一般聊天、简单问答、轻度情感）\n"
-    "3 = 高情感/深度（倾诉烦恼、争执冲突、深度亲密表达、长文认真讨论、重大事件分享）\n\n"
-    "如果消息包含明显的性暗示或亲密 roleplay 内容（接吻拥抱不算），在数字后加 +N。\n"
-    "只回复数字，如 1、2、3、2+N、3+N。不要解释。"
+    "3 = 高情感/深度（倾诉烦恼、争执冲突、深度亲密表达、长文认真讨论、重大事件）\n\n"
+    "nsfw: 消息包含明显性暗示或亲密 roleplay（接吻拥抱不算）→ true，否则 false\n"
+    "只返回 JSON，不要解释。"
 )
+
+# 本地快速路径：极短消息直接 Haiku，跳过分类器调用
+_FAST_HAIKU = (
+    "嗯", "嗯嗯", "哦", "哦哦", "好", "好的", "好", "行", "哈哈", "哈哈哈",
+    "嘻嘻", "嘿嘿", "ok", "OK", "okok", "好吧", "好呢", "是", "对",
+    "对对", "没事", "没事啦", "知道了", "收到", "可以", "行吧",
+)
+
+# 粘性计数器：升级后至少维持 3 轮不降级
+_STICKY_TURNS = 3
+_sticky_tier: int = 1          # 当前粘性等级（最低允许 tier）
+_sticky_remaining: int = 0     # 还剩几轮粘性
 
 def classify_message(text: str, convo_tail: list) -> tuple:
     """Classify message complexity. Returns (tier: int, nsfw: bool).
     tier: 1=haiku, 2=sonnet, 3=opus. nsfw=True forces sonnet over opus."""
+    global _sticky_tier, _sticky_remaining
+
     # 快速路径：关键词预判 NSFW
     nsfw_hint = any(kw in text for kw in _NSFW_KW)
 
     if not _TIER_ENABLED:
-        return (2, nsfw_hint)  # 未配置分层 → 默认 sonnet 级别（走原有 MODEL_ROUTES）
+        return (2, nsfw_hint)
+
+    # 本地快速路径：极短简单消息 → Haiku
+    stripped = text.strip()
+    if len(stripped) <= 6 and stripped in _FAST_HAIKU:
+        log("tier", f"fast-path → haiku (text={stripped!r})")
+        tier = max(1, _sticky_tier if _sticky_remaining > 0 else 1)
+        if _sticky_remaining > 0:
+            _sticky_remaining -= 1
+        return (tier, False)
 
     try:
         route = {"base": _TIER_API_BASE, "key": _TIER_API_KEY, "model": _TIER_HAIKU}
         msgs = [{"role": "system", "content": _CLASSIFY_PROMPT}]
-        # 带最近 2 轮上下文帮分类器理解语境
         for m in convo_tail[-4:]:
             msgs.append(m)
         msgs.append({"role": "user", "content": text})
-        result = _one_call(route, msgs)
-        result = result.strip()
-        nsfw = "+N" in result or "+n" in result
-        tier = int(result.replace("+N", "").replace("+n", "").strip()[:1])
+        raw = _one_call(route, msgs).strip()
+        # 解析 JSON
+        data = json.loads(raw)
+        tier = int(data.get("level", 2))
+        nsfw = bool(data.get("nsfw", nsfw_hint))
         tier = max(1, min(3, tier))
-        log("tier", f"classify → {tier}{' nsfw' if nsfw else ''} (text={text[:40]})")
-        return (tier, nsfw)
     except Exception as e:
         log("tier", f"classify failed: {e}, defaulting to tier 2")
-        return (2, nsfw_hint)
+        tier = 2
+        nsfw = nsfw_hint
+
+    # 粘性：升级后至少维持 3 轮
+    if tier > _sticky_tier:
+        _sticky_tier = tier
+        _sticky_remaining = _STICKY_TURNS
+        log("tier", f"upgrade → tier {tier}, sticky {_STICKY_TURNS} turns")
+    elif _sticky_remaining > 0:
+        if tier < _sticky_tier:
+            tier = _sticky_tier
+            log("tier", f"sticky: held at tier {_sticky_tier} ({_sticky_remaining} left)")
+        _sticky_remaining -= 1
+    else:
+        _sticky_tier = tier  # 粘性结束，更新基准
+
+    log("tier", f"classify → {tier}{' nsfw' if nsfw else ''} (text={text[:40]})")
+    return (tier, nsfw)
 
 
 def call_tiered(messages: list, tier: int, nsfw: bool) -> tuple:
