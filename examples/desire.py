@@ -26,6 +26,10 @@ STATE_FILE = Path(os.environ.get(
     "BRIDGE_STATE_DIR", Path.home() / ".companion-bridge"
 )) / "desire.json"
 
+HISTORY_FILE = Path(os.environ.get(
+    "BRIDGE_STATE_DIR", Path.home() / ".companion-bridge"
+)) / "desire_history.jsonl"
+
 # ── 衰减常数 ──────────────────────────────────────────────
 
 # 每小时自然变化（不聊天时）
@@ -108,6 +112,24 @@ class DesireState:
             "last_update": self.last_update,
             "last_chat": self.last_chat,
         }, ensure_ascii=False), encoding="utf-8")
+
+    def log_change(self, reason: str = "") -> None:
+        """Append a snapshot to the JSONL history file."""
+        try:
+            HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+            entry = {
+                "ts": datetime.now(_TZ).strftime("%Y-%m-%dT%H:%M:%S"),
+                "att": round(self.attachment, 3),
+                "str": round(self.stress, 3),
+                "fat": round(self.fatigue, 3),
+                "lib": round(self.libido, 3),
+                "desc": self.prompt_description(),
+                "reason": reason,
+            }
+            with open(HISTORY_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except Exception:
+            pass  # best-effort
 
     # ── 工具方法 ──
 

@@ -336,11 +336,27 @@ def report_model(model_id: str, available: bool) -> None:
 _HEARTBEAT_INTERVAL = 60  # seconds — re-report every 1 min to survive relay restarts
 
 def _status_heartbeat() -> None:
-    """Periodically re-report all model statuses; re-probe unavailable ones."""
+    """Periodically re-report all model statuses; re-probe unavailable ones.
+    Also applies desire state decay every 5 min so the PWA card stays current
+    even when no new messages arrive."""
     tick = 0
     while True:
         time.sleep(_HEARTBEAT_INTERVAL)
         tick += 1
+
+        # ── desire decay (every 5 min) ──
+        if tick % 5 == 0:
+            try:
+                _before = desire_state.summary()
+                desire_state.apply_decay()
+                _after = desire_state.summary()
+                if _before != _after:
+                    desire_state.save()
+                    push_desire()
+                    desire_state.log_change("decay")
+                    log("desire", f"decay: {_before} → {_after}")
+            except Exception as e:
+                log("desire", f"heartbeat decay failed: {e}")
         # Every 5 ticks (~5 min), re-probe models that were marked unavailable
         if tick % 5 == 0 and MODEL_ROUTES:
             route = MODEL_ROUTES[0]
@@ -787,6 +803,7 @@ def _process_flushed_messages(msgs: list) -> None:
         desire_state.update_from_conversation(last_text_content, reply)
         desire_state.save()
         push_desire()
+        desire_state.log_change("conversation")
         log("desire", f"updated → {desire_state.summary()}")
 
         # Async memory extraction (non-blocking)
@@ -935,8 +952,11 @@ def main() -> None:
     # Initialize desire system (load persisted state or start fresh)
     if desire_state.load():
         desire_state.apply_decay()  # account for time elapsed since last save
+        desire_state.save()
+        desire_state.log_change("boot-decay")
         log("boot", f"desire: loaded → {desire_state.summary()}")
     else:
+        desire_state.log_change("boot-fresh")
         log("boot", "desire: fresh start (no saved state)")
     # Push initial state to relay so PWA status card has data
     try:
