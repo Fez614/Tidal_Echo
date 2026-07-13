@@ -258,22 +258,25 @@ _CLASSIFY_PROMPT = (
     "只返回 JSON，不要解释。"
 )
 
-# 本地快速路径：极短消息直接 Haiku，跳过分类器调用
+# 本地快速路径：常见短句直接 Haiku，跳过分类器调用
 _FAST_HAIKU = (
     "嗯", "嗯嗯", "哦", "哦哦", "好", "好的", "好", "行", "哈哈", "哈哈哈",
     "嘻嘻", "嘿嘿", "ok", "OK", "okok", "好吧", "好呢", "是", "对",
     "对对", "没事", "没事啦", "知道了", "收到", "可以", "行吧",
+    "是啊", "对啊", "没有", "不了", "算了", "随便", "都行", "看你",
+    "好嘞", "好咧", "行吧行吧", "得了吧", "真的假的", "不至于", "那倒是",
+    "确实", "也是", "好像也是", "有道理", "说得对", "没毛病",
+    "哈哈哈哈", "笑死", "绝了", "离谱", "真的吗", "是吗", "啊？",
+    "好吧好吧", "行行行", "好好好", "okokok", "嗯好", "嗯行",
+    "谢谢", "谢啦", "感谢", "辛苦啦", "晚安", "早安", "早",
+    "在吗", "在不在", "干嘛呢", "吃了吗", "吃了", "没吃",
+    "去了", "回来了", "到了", "出发", "走吧", "好困", "好累",
+    "洗澡去了", "吃饭去了", "我回来了", "睡觉了", "睡了",
 )
-
-# 粘性计数器：升级后至少维持 3 轮不降级
-_STICKY_TURNS = 3
-_sticky_tier: int = 1          # 当前粘性等级（最低允许 tier）
-_sticky_remaining: int = 0     # 还剩几轮粘性
 
 def classify_message(text: str, convo_tail: list) -> tuple:
     """Classify message complexity. Returns (tier: int, nsfw: bool).
     tier: 1=haiku, 2=sonnet, 3=opus. nsfw=True forces sonnet over opus."""
-    global _sticky_tier, _sticky_remaining
 
     # 快速路径：关键词预判 NSFW
     nsfw_hint = any(kw in text for kw in _NSFW_KW)
@@ -281,14 +284,11 @@ def classify_message(text: str, convo_tail: list) -> tuple:
     if not _TIER_ENABLED:
         return (2, nsfw_hint)
 
-    # 本地快速路径：极短简单消息 → Haiku
+    # 本地快速路径：短句直接 Haiku
     stripped = text.strip()
-    if len(stripped) <= 6 and stripped in _FAST_HAIKU:
+    if len(stripped) <= 8 and stripped in _FAST_HAIKU:
         log("tier", f"fast-path → haiku (text={stripped!r})")
-        tier = max(1, _sticky_tier if _sticky_remaining > 0 else 1)
-        if _sticky_remaining > 0:
-            _sticky_remaining -= 1
-        return (tier, False)
+        return (1, False)
 
     try:
         route = {"base": _TIER_API_BASE, "key": _TIER_API_KEY, "model": _TIER_HAIKU}
@@ -306,19 +306,6 @@ def classify_message(text: str, convo_tail: list) -> tuple:
         log("tier", f"classify failed: {e}, defaulting to tier 2")
         tier = 2
         nsfw = nsfw_hint
-
-    # 粘性：升级后至少维持 3 轮
-    if tier > _sticky_tier:
-        _sticky_tier = tier
-        _sticky_remaining = _STICKY_TURNS
-        log("tier", f"upgrade → tier {tier}, sticky {_STICKY_TURNS} turns")
-    elif _sticky_remaining > 0:
-        if tier < _sticky_tier:
-            tier = _sticky_tier
-            log("tier", f"sticky: held at tier {_sticky_tier} ({_sticky_remaining} left)")
-        _sticky_remaining -= 1
-    else:
-        _sticky_tier = tier  # 粘性结束，更新基准
 
     log("tier", f"classify → {tier}{' nsfw' if nsfw else ''} (text={text[:40]})")
     return (tier, nsfw)
