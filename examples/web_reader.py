@@ -36,6 +36,21 @@ _USER_AGENT = (
     "Chrome/115.0.0.0 Safari/537.36"
 )
 
+# 移动端 UA，用于微信公众号等需要移动 UA 的站点
+_MOBILE_UA = (
+    "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/116.0.0.0 Mobile Safari/537.36"
+)
+
+# 已知会封锁代理 IP 的域名 → 自动走直连
+_NOPROXY_DOMAINS = (
+    "mp.weixin.qq.com",
+    "weixin.qq.com",
+    "xiaohongshu.com",
+    "xhslink.com",
+)
+
 
 # -----------------------------------------------------------------------
 # URL 检测
@@ -61,19 +76,56 @@ def find_urls(text: str) -> list:
 # HTTP 抓取
 # -----------------------------------------------------------------------
 
-def _fetch(url: str, timeout: int = _TIMEOUT) -> tuple:
-    """
-    抓取 URL 内容，自动处理编码。
-    返回 (bytes_content, content_type)。失败返回 (None, None)。
-    """
+def _should_noproxy(url: str) -> bool:
+    """检查 URL 是否应该跳过代理直连。"""
+    from urllib.parse import urlparse
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        host = urlparse(url).hostname or ""
+    except Exception:
+        return False
+    return any(host == d or host.endswith("." + d) for d in _NOPROXY_DOMAINS)
+
+
+def _do_fetch(url: str, use_proxy: bool, timeout: int) -> tuple:
+    """执行单次 HTTP 请求。use_proxy=False 时绕过系统代理。"""
+    try:
+        ua = _MOBILE_UA if _should_noproxy(url) else _USER_AGENT
+        req = urllib.request.Request(url, headers={
+            "User-Agent": ua,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        })
+        if use_proxy:
+            opener = urllib.request.build_opener()
+        else:
+            # 绕过所有代理
+            proxy_handler = urllib.request.ProxyHandler({})
+            opener = urllib.request.build_opener(proxy_handler)
+        with opener.open(req, timeout=timeout) as resp:
             data = resp.read()
             ctype = resp.headers.get("Content-Type", "")
         return data, ctype
     except Exception:
         return None, None
+
+
+def _fetch(url: str, timeout: int = _TIMEOUT) -> tuple:
+    """
+    抓取 URL 内容，自动处理编码和代理。
+    对已知封代理的域名直接走直连；其他站点先走代理，403 时自动回退直连。
+    返回 (bytes_content, content_type)。失败返回 (None, None)。
+    """
+    # 已知封代理的域名 → 直接直连
+    if _should_noproxy(url):
+        return _do_fetch(url, use_proxy=False, timeout=timeout)
+
+    # 其他站点：先走代理，失败回退直连
+    data, ctype = _do_fetch(url, use_proxy=True, timeout=timeout)
+    if data is not None:
+        return data, ctype
+
+    # 回退：不走代理再试一次
+    return _do_fetch(url, use_proxy=False, timeout=timeout)
 
 
 def _decode_html(data: bytes, ctype: str) -> str:
@@ -175,12 +227,26 @@ class _HTMLTextExtractor(HTMLParser):
 
 def _extract_text(html: str) -> tuple:
     """从 HTML 字符串提取 (title, text)。"""
+    # 优先从 og:title / twitter:title meta 标签提取标题（微信公众号等 SPA 常用）
+    meta_title = ""
+    for pat in (
+        re.compile(r'<meta\s+(?:property|name)=["\']og:title["\']\s+content=["\']([^"\']+)', re.I),
+        re.compile(r'<meta\s+content=["\']([^"\']+)["\']\s+(?:property|name)=["\']og:title["\']', re.I),
+        re.compile(r'<meta\s+(?:property|name)=["\']twitter:title["\']\s+content=["\']([^"\']+)', re.I),
+    ):
+        m = pat.search(html)
+        if m:
+            meta_title = m.group(1).strip()
+            break
+
     extractor = _HTMLTextExtractor()
     try:
         extractor.feed(html)
     except Exception:
-        return "", html[:2000]
-    return extractor.get_result()
+        return meta_title, html[:2000]
+    title, text = extractor.get_result()
+    # og:title 优先于 <title> 标签（后者常含站名后缀）
+    return meta_title or title, text
 
 
 # -----------------------------------------------------------------------
