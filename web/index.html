@@ -4509,7 +4509,7 @@ const MODEL_CHOICES = [
   { value:"google/gemini-2.5-flash", label:"Gemini 2.5 Flash", vision:true, group:"Google", desc:"快速模型" },
   { value:"meta-llama/llama-4-maverick", label:"Llama 4 Maverick", vision:true, group:"Meta", desc:"最新开源模型" },
   { value:"mistralai/mistral-large", label:"Mistral Large", group:"Mistral", desc:"最强模型" },
-  { value:"anthropic/claude-haiku-4.5", label:"Haiku 4.5", tag:"路由", vision:true, group:"自定义", desc:"轻量快速，用于路由分级" }
+  { value:"routing", label:"Haiku 4.5", tag:"路由", group:"自定义", desc:"自动分级：Haiku 判断复杂度，分发到对应模型" }
 ];
 const modelStatusCache = {};
 
