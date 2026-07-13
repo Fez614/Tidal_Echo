@@ -111,6 +111,7 @@ _TIER_HAIKU  = os.environ.get("TIER_MODEL_HAIKU", "").strip()
 _TIER_API_BASE = os.environ.get("TIER_API_BASE", "").rstrip("/") or (MODEL_ROUTES[0]["base"] if MODEL_ROUTES else "")
 _TIER_API_KEY  = os.environ.get("TIER_API_KEY", "").strip() or (MODEL_ROUTES[0]["key"] if MODEL_ROUTES else "")
 _TIER_ENABLED  = bool(_TIER_OPUS and _TIER_SONNET and _TIER_HAIKU and _TIER_API_KEY)
+_ROUTING_MODEL = "routing"  # PWA 选此值时启用分级路由，选其他具体模型时直接用该模型
 
 # 色情/亲密 roleplay 关键词 → 强制 sonnet（不用 opus）
 _NSFW_KW = (
@@ -606,7 +607,13 @@ def _auto_message_loop() -> None:
             convo_snapshot = list(convo)
             messages = [{"role": "system", "content": sys_content}] + convo_snapshot[-6:]
 
-            reply, model_used, fallback_note = call_tiered(messages, tier=2, nsfw=False)
+            reply, model_used, fallback_note = "", "", ""
+            _rm = get_relay_model()
+            if _TIER_ENABLED and (_rm == _ROUTING_MODEL or _rm == ""):
+                reply, model_used, fallback_note = call_tiered(messages, tier=2, nsfw=False)
+            else:
+                reply, model_used = call_llm(messages)
+                fallback_note = ""
 
             if not reply or len(reply.strip()) < 2:
                 log("auto", "empty reply, skipping")
@@ -678,6 +685,10 @@ def _startup_model_probe() -> None:
         report_model(mid, available)
         tag = "✓" if available else "✗"
         log("probe", f"  {tag} {mid}")
+    # 上报虚拟路由模型状态（分级配置完整 → available）
+    if _TIER_ENABLED:
+        report_model(_ROUTING_MODEL, True)
+        log("probe", f"  ✓ {_ROUTING_MODEL} (tiered routing enabled)")
     # 确保上报成功(relay 可能在部署中 502,需要等它恢复后重发)
     for attempt in range(10):
         try:
@@ -896,7 +907,7 @@ def active_model_routes() -> list:
         model = ""
         # Priority 1: relay /app/model (frontend switches update this)
         relay_model = get_relay_model()
-        if relay_model:
+        if relay_model and relay_model != _ROUTING_MODEL:
             model = relay_model
         # Priority 2: local MODEL_CONFIG_FILE
         if not model and MODEL_CONFIG_FILE:
@@ -1055,14 +1066,18 @@ def _process_flushed_messages(msgs: list) -> None:
         text_preview = c[:100] if isinstance(c, str) else str(c)[:100]
         log("debug", f"msg[{i}] role={m['role']}: {text_preview}")
     try:
+        _relay_model = get_relay_model()
+        _use_tiered = _TIER_ENABLED and last_text_content and (_relay_model == _ROUTING_MODEL or _relay_model == "")
         if tools:
             # 带工具的调用走原有 MODEL_ROUTES（工具兼容性更重要）
             reply, actual_model = call_llm(messages, tools=tools)
             fallback_note = ""
-        elif _TIER_ENABLED and last_text_content:
+        elif _use_tiered:
             tier, nsfw = classify_message(last_text_content, list(convo))
             reply, actual_model, fallback_note = call_tiered(messages, tier, nsfw)
         else:
+            # PWA 选了具体模型 → 直接用该模型，不走分级
+            log("model", f"using selected model: {_relay_model or 'default'}")
             reply, actual_model = call_llm(messages)
             fallback_note = ""
     except Exception as e:
@@ -1221,6 +1236,7 @@ def main() -> None:
     except Exception as e:
         log("boot", f"PID lock check failed: {e}")
     log("boot", f"relay={RELAY_URL}  models={[r['model'] for r in MODEL_ROUTES]}  history={HISTORY_N}")
+    log("boot", f"tier_routing: {'enabled' if _TIER_ENABLED else 'disabled'}  PWA select \"{_ROUTING_MODEL}\" to activate")
 
     # Initialize Ombre Brain memory system
     mem_ok = memory.init(log)
