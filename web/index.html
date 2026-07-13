@@ -2579,6 +2579,18 @@
     margin-left:6px;
     vertical-align:middle;
   }
+  .model-route-tag{
+    display:inline-block;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.03em;
+    padding:2px 6px;
+    border-radius:4px;
+    background:#FFF0E0;
+    color:#C08030;
+    margin-left:6px;
+    vertical-align:middle;
+  }
   .model-group-label{
     padding:10px 16px 4px;
     font-size:12px;
@@ -4496,7 +4508,8 @@ const MODEL_CHOICES = [
   { value:"google/gemini-2.5-pro", label:"Gemini 2.5 Pro", badge:"Pro", vision:true, group:"Google", desc:"推理模型" },
   { value:"google/gemini-2.5-flash", label:"Gemini 2.5 Flash", vision:true, group:"Google", desc:"快速模型" },
   { value:"meta-llama/llama-4-maverick", label:"Llama 4 Maverick", vision:true, group:"Meta", desc:"最新开源模型" },
-  { value:"mistralai/mistral-large", label:"Mistral Large", group:"Mistral", desc:"最强模型" }
+  { value:"mistralai/mistral-large", label:"Mistral Large", group:"Mistral", desc:"最强模型" },
+  { value:"anthropic/claude-haiku-4.5", label:"Haiku 4.5", tag:"路由", vision:true, group:"自定义", desc:"轻量快速，用于路由分级" }
 ];
 const modelStatusCache = {};
 
@@ -4570,7 +4583,7 @@ function renderModelSheet(activeModel){
       const stLabel = statusLabel(st);
       return `<button class="model-option${active ? " active" : ""}" type="button" data-model="${escapeHtml(m.value)}">
         <span class="model-copy">
-          <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}${m.vision ? ' <span class="model-vision-tag">Vision</span>' : ""}</span>
+          <span class="model-name">${escapeHtml(m.label)}${m.badge ? ` <span class="model-badge">${escapeHtml(m.badge)}</span>` : ""}${m.vision ? ' <span class="model-vision-tag">Vision</span>' : ""}${m.tag ? ` <span class="model-route-tag">${escapeHtml(m.tag)}</span>` : ""}</span>
           <span class="model-desc">${escapeHtml(m.desc || "")}</span>
         </span>
         <span class="model-status-bar ${stClass}" data-status-for="${escapeHtml(m.value)}"></span>
