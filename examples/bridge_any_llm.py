@@ -82,6 +82,7 @@ for _pk in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"):
 # memory.py reads config from os.environ at import time — must be imported AFTER .env loading
 import memory
 import desire
+import web_reader
 
 # 日志级别: debug / info(默认) / warn / error
 _LOG_LEVELS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
@@ -98,6 +99,10 @@ OPENROUTER_TITLE = os.environ.get("OPENROUTER_TITLE", "Tidal Echo Local")
 MODEL_CONFIG_FILE = os.environ.get("MODEL_CONFIG_FILE", "").strip()
 RELATIONSHIP_FILE = os.environ.get("RELATIONSHIP_FILE", "").strip()
 MEMORY_BANK_FILE = os.environ.get("MEMORY_BANK_FILE", "").strip()
+
+# ── 网页阅读：自动抓取消息中的 URL 并注入正文 ──
+WEB_READ_ENABLED = os.environ.get("WEB_READ_ENABLED", "true").lower() in ("true", "1", "yes")
+WEB_READ_MAX_CHARS = int(os.environ.get("WEB_READ_MAX_CHARS", "4000"))
 
 # ── 分层模型路由：按消息复杂度自动选择模型 ──
 _TIER_OPUS   = os.environ.get("TIER_MODEL_OPUS", "").strip()
@@ -990,6 +995,19 @@ def _process_flushed_messages(msgs: list) -> None:
         names = ", ".join(a.get("name") or "file" for a in all_non_image_atts)
         merged_text = (merged_text + "\n" if merged_text else "") + f"(对方发来 {len(all_non_image_atts)} 个附件: {names})"
 
+    # ── 网页阅读：检测消息中的 URL，抓取正文注入上下文 ──
+    if WEB_READ_ENABLED and merged_text:
+        _urls = web_reader.find_urls(merged_text)
+        for _url in _urls[:3]:  # 最多抓 3 个链接，避免超时
+            _page = web_reader.read_url(_url, max_chars=WEB_READ_MAX_CHARS)
+            if _page and _page.get("text"):
+                _title = _page.get("title", "")
+                _label = f"[对方分享的网页: {_title}]" if _title else f"[对方分享的网页: {_url}]"
+                merged_text += f"\n\n{_label}\n{_page['text']}"
+                log("web", f"read {_url} → {len(_page['text'])} chars")
+            else:
+                log("web", f"read failed: {_url}")
+
     if all_images:
         parts = []
         if merged_text:
@@ -1202,6 +1220,7 @@ def main() -> None:
     # Initialize Ombre Brain memory system
     mem_ok = memory.init(log)
     log("boot", f"memory: {'OB connected' if mem_ok else 'OB unavailable'}")
+    log("boot", f"web_reader: {'enabled' if WEB_READ_ENABLED else 'disabled'} (max_chars={WEB_READ_MAX_CHARS})")
 
     # Initialize desire system (load persisted state or start fresh)
     if desire_state.load():
