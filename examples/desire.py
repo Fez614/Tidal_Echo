@@ -315,11 +315,11 @@ class DesireState:
         elif self.libido >= 0.3:
             parts.append("看着阿雾觉得有点心动")
 
-        # fatigue
-        if self.fatigue >= 0.7:
-            parts.append("很困了，脑子有点糊")
-        elif self.fatigue >= 0.4:
-            parts.append("有点累了")
+        # fatigue — only mention when genuinely sleepy
+        if self.fatigue >= 0.85:
+            parts.append("真的很困了")
+        elif self.fatigue >= 0.7:
+            parts.append("有点犯困")
 
         if not parts:
             return "状态很好，安静地在这里"
