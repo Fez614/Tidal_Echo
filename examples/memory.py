@@ -48,7 +48,7 @@ MESSAGE_BUFFER_SECONDS = int(os.environ.get("MESSAGE_BUFFER_SECONDS", "20"))
 OB_HOOK_TOKEN = os.environ.get("OB_HOOK_TOKEN", "liminal-bridge-token")
 
 # Memory retrieval token budget
-MEMORY_MAX_TOKENS = int(os.environ.get("MEMORY_MAX_TOKENS", "3000"))
+MEMORY_MAX_TOKENS = int(os.environ.get("MEMORY_MAX_TOKENS", "1500"))
 
 # ---------------------------------------------------------------------------
 # Logging (reuse bridge's log function if available, else fallback)
