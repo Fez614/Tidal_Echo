@@ -316,9 +316,9 @@ class DesireState:
             parts.append("看着阿雾觉得有点心动")
 
         # fatigue — only mention when genuinely sleepy
-        if self.fatigue >= 0.85:
+        if self.fatigue >= 0.95:
             parts.append("真的很困了")
-        elif self.fatigue >= 0.7:
+        elif self.fatigue >= 0.8:
             parts.append("有点犯困")
 
         if not parts:
