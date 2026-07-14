@@ -3665,8 +3665,8 @@ coffee: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" width="
 function _pickCrabState(d){
   const a = d.attachment ?? 0, s = d.stress ?? 0, f = d.fatigue ?? 0, l = d.libido ?? 0;
   const aHigh = a > 0.5, sHigh = s >= 0.5, lHigh = l > 0.5;
-  // P1: fatigue gate
-  if (f >= 0.70) return "sleepy";
+  // P1: fatigue gate (match desire.py: 0.80+ = sleepy)
+  if (f >= 0.80) return "sleepy";
   // P2: stress → sad or angry depending on attachment
   if (sHigh) return aHigh ? "sad" : "angry";
   // P3: positive states (stress low)
