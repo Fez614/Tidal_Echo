@@ -587,8 +587,6 @@ def _auto_message_loop() -> None:
             if RELATIONSHIP_SUMMARY:
                 sys_parts.append(RELATIONSHIP_SUMMARY)
             mem_ctx = memory.retrieve_context("")
-            if mem_ctx:
-                sys_parts.append(mem_ctx)
             _weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
             sys_parts.append(f"[当前时间: {_now.strftime('%Y年%m月%d日')} {_weekdays[_now.weekday()]} {_now.strftime('%H:%M')}]")
             desire_state.apply_decay()
@@ -605,7 +603,10 @@ def _auto_message_loop() -> None:
 
             # 带最近对话上下文，让模型知道之前聊了什么
             convo_snapshot = list(convo)
-            messages = [{"role": "system", "content": sys_content}] + convo_snapshot[-6:]
+            messages = [{"role": "system", "content": sys_content}]
+            if mem_ctx:
+                messages.append({"role": "system", "content": f"[你们之间的记忆]\n{mem_ctx}"})
+            messages.extend(convo_snapshot[-6:])
 
             reply, model_used, fallback_note = "", "", ""
             _rm = get_relay_model()
@@ -948,14 +949,13 @@ def _process_flushed_messages(msgs: list) -> None:
             latest_text = c
             break
 
-    # Build system prompt with dynamic memory context
+    # Build system prompt — keep pure persona, no dynamic memory
     sys_parts = [PERSONA]
     if RELATIONSHIP_SUMMARY:
         sys_parts.append(RELATIONSHIP_SUMMARY)
     mem_ctx = memory.retrieve_context(latest_text)
     if mem_ctx:
-        sys_parts.append(mem_ctx)
-        log("memory", f"context injected: {len(mem_ctx)} chars")
+        log("memory", f"context retrieved: {len(mem_ctx)} chars (separate message)")
     # ── 注入当前时间,让模型知道现在几点 ──
     _tz = timezone(timedelta(hours=8))
     _now = datetime.now(_tz)
@@ -968,10 +968,12 @@ def _process_flushed_messages(msgs: list) -> None:
     log("desire", f"{desire_state.summary()} → {_desire_desc}")
     sys_content = "\n\n".join(p for p in sys_parts if p.strip())
 
-    # Build messages: system + full conversation history (including assistant replies)
-    # + current user message appended below.
+    # Build messages: system + memory (separate) + conversation history
     convo_list = list(convo)
-    messages = [{"role": "system", "content": sys_content}] + convo_list
+    messages = [{"role": "system", "content": sys_content}]
+    if mem_ctx:
+        messages.append({"role": "system", "content": f"[你们之间的记忆]\n{mem_ctx}"})
+    messages.extend(convo_list)
 
     # Merge all buffered text messages into a SINGLE user message.
     # Sending them as separate user turns confuses the model — it picks one
