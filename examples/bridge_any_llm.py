@@ -102,7 +102,7 @@ MEMORY_BANK_FILE = os.environ.get("MEMORY_BANK_FILE", "").strip()
 
 # ── 网页阅读：自动抓取消息中的 URL 并注入正文 ──
 WEB_READ_ENABLED = os.environ.get("WEB_READ_ENABLED", "true").lower() in ("true", "1", "yes")
-WEB_READ_MAX_CHARS = int(os.environ.get("WEB_READ_MAX_CHARS", "4000"))
+WEB_READ_MAX_CHARS = int(os.environ.get("WEB_READ_MAX_CHARS", "2000"))
 
 # ── 分层模型路由：按消息复杂度自动选择模型 ──
 _TIER_OPUS   = os.environ.get("TIER_MODEL_OPUS", "").strip()
@@ -1014,7 +1014,7 @@ def _process_flushed_messages(msgs: list) -> None:
     # ── 网页阅读：检测消息中的 URL，抓取正文注入上下文 ──
     if WEB_READ_ENABLED and merged_text:
         _urls = web_reader.find_urls(merged_text)
-        for _url in _urls[:3]:  # 最多抓 3 个链接，避免超时
+        for _url in _urls[:2]:  # 最多抓 2 个链接，避免超时和 token 浪费
             _page = web_reader.read_url(_url, max_chars=WEB_READ_MAX_CHARS)
             if _page and _page.get("text"):
                 _title = _page.get("title", "")
